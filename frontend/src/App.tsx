@@ -1758,6 +1758,10 @@ function AdminPanel({
   const [reactivateTeamId, setReactivateTeamId] = useState("");
   const [deleteGroupCategoryId, setDeleteGroupCategoryId] = useState("");
   const [deleteGroupId, setDeleteGroupId] = useState("");
+  const [removeConfirm, setRemoveConfirm] = useState<{
+    label: string;
+    run: () => Promise<unknown>;
+  } | null>(null);
 
   useEffect(() => {
     api
@@ -1804,7 +1808,7 @@ function AdminPanel({
       }
     };
     void load();
-  }, [manageGroupId, manageCategoryId, categories, players, teams]);
+  }, [manageGroupId, manageCategoryId, categories, players, teams, tournament]);
 
   const activePlayers = players.filter((p) => p.is_active);
   const inactivePlayers = players.filter((p) => !p.is_active);
@@ -1911,12 +1915,64 @@ function AdminPanel({
       const updatedGroups = await api.getGroups();
       setGroups(updatedGroups);
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Action failed");
+      const text = e instanceof Error ? e.message : "Action failed";
+      setMessage(text);
     }
   };
 
+  const confirmRemoveFromGroup = async () => {
+    if (!removeConfirm) return;
+    const { label, run } = removeConfirm;
+    setRemoveConfirm(null);
+    await runAction(run, `Removed ${label} from group`);
+  };
+
+  const removeConfirmDialog =
+    removeConfirm &&
+    createPortal(
+      <div
+        className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        onClick={() => setRemoveConfirm(null)}
+      >
+        <div
+          className="glass-strong rounded-2xl max-w-md w-full p-6 shadow-xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p className="font-display text-lg font-bold mb-2">
+            Remove {removeConfirm.label}?
+          </p>
+          <ul className="text-sm text-slate-500 dark:text-slate-400 mb-6 space-y-1 list-disc pl-5">
+            <li>Played 0–1 matches: all their matches and points are removed.</li>
+            <li>
+              Played 3+ matches: remaining fixtures become walkovers (opponent
+              gets 2 points, 0 score).
+            </li>
+            <li>Played exactly 2: all their matches are removed.</li>
+          </ul>
+          <div className="flex gap-3 justify-end">
+            <button
+              type="button"
+              onClick={() => setRemoveConfirm(null)}
+              className="px-4 py-2 rounded-xl glass text-sm font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => void confirmRemoveFromGroup()}
+              className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-semibold"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body,
+    );
+
   return (
     <div className="mb-10 glass rounded-2xl p-6 space-y-6">
+      {removeConfirmDialog}
       <h3 className="font-display text-xl font-bold">Organizer Tools</h3>
       {message && <p className="text-sm text-accent-teal">{message}</p>}
 
@@ -2196,8 +2252,9 @@ function AdminPanel({
                   <button
                     type="button"
                     onClick={() =>
-                      runAction(
-                        () =>
+                      setRemoveConfirm({
+                        label: item.label,
+                        run: () =>
                           item.type === "player"
                             ? api.removePlayerFromGroup(
                                 manageGroupId,
@@ -2207,10 +2264,7 @@ function AdminPanel({
                                 manageGroupId,
                                 item.assignmentId,
                               ),
-                        `Removed ${item.label} from group`,
-                        undefined,
-                        `Remove ${item.label} from this group? Scheduled matches for them will be deleted.`,
-                      )
+                      })
                     }
                     className="text-red-600 dark:text-red-400 text-xs font-semibold hover:underline"
                   >

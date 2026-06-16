@@ -12,7 +12,7 @@ from app.models.player import Player
 from app.models.team import Team
 from app.schemas.group_player import GroupPlayerCreate
 from app.schemas.group_team import GroupTeamCreate
-from app.services import fixture_service
+from app.services import fixture_service, removal_service
 
 
 def get_group(db: Session, group_id: uuid.UUID) -> Group:
@@ -125,7 +125,7 @@ def remove_player(db: Session, group_id: uuid.UUID, assignment_id: uuid.UUID) ->
             status_code=status.HTTP_404_NOT_FOUND, detail="Player assignment not found"
         )
 
-    fixture_service.delete_scheduled_matches_for_participant(
+    removal_service.prepare_participant_removal(
         db, group_id, assignment.player_id
     )
     db.delete(assignment)
@@ -198,8 +198,6 @@ def remove_team(db: Session, group_id: uuid.UUID, assignment_id: uuid.UUID) -> N
             status_code=status.HTTP_404_NOT_FOUND, detail="Team assignment not found"
         )
 
-    fixture_service.delete_scheduled_matches_for_participant(
-        db, group_id, assignment.team_id
-    )
+    removal_service.prepare_participant_removal(db, group_id, assignment.team_id)
     db.delete(assignment)
     db.commit()

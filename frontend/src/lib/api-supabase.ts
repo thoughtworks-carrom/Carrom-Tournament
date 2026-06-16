@@ -91,20 +91,51 @@ function invalidateCache() {
   cachedTeams = null;
 }
 
-async function deleteScheduledMatchesForParticipant(
+async function prepareParticipantRemoval(
   groupId: string,
   participantId: string,
-) {
+): Promise<void> {
   const sb = requireSupabase();
-  const { error } = await sb
+  const { data: matches, error } = await sb
     .from("matches")
-    .delete()
+    .select("id, status, participant1_id, participant2_id")
     .eq("group_id", groupId)
-    .eq("status", "SCHEDULED")
     .or(
       `participant1_id.eq.${participantId},participant2_id.eq.${participantId}`,
     );
   if (error) sbError(error);
+
+  const all = matches ?? [];
+  const played = all.filter((m) => m.status === "COMPLETED").length;
+
+  if (played < 2 || played === 2) {
+    const ids = all.map((m) => m.id as string);
+    if (ids.length > 0) {
+      const { error: delError } = await sb.from("matches").delete().in("id", ids);
+      if (delError) sbError(delError);
+    }
+    return;
+  }
+
+  const remaining = all.filter(
+    (m) => m.status === "SCHEDULED" || m.status === "LIVE",
+  );
+  for (const m of remaining) {
+    const opponent =
+      m.participant1_id === participantId
+        ? (m.participant2_id as string)
+        : (m.participant1_id as string);
+    const { error: updError } = await sb
+      .from("matches")
+      .update({
+        status: "COMPLETED" as MatchStatus,
+        winner_participant_id: opponent,
+        winner_score: 0,
+        loser_score: 0,
+      })
+      .eq("id", m.id as string);
+    if (updError) sbError(updError);
+  }
 }
 
 async function validateDoublesTeam(
@@ -450,7 +481,7 @@ export const supabaseClient = {
       .single();
     if (fetchError) sbError(fetchError);
 
-    await deleteScheduledMatchesForParticipant(groupId, row.player_id as string);
+    await prepareParticipantRemoval(groupId, row.player_id as string);
 
     const { error } = await sb
       .from("group_players")
@@ -470,7 +501,7 @@ export const supabaseClient = {
       .single();
     if (fetchError) sbError(fetchError);
 
-    await deleteScheduledMatchesForParticipant(groupId, row.team_id as string);
+    await prepareParticipantRemoval(groupId, row.team_id as string);
 
     const { error } = await sb
       .from("group_teams")
