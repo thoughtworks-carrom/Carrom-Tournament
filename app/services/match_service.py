@@ -25,14 +25,16 @@ def _score_fields_changed(data: MatchUpdate) -> bool:
 
 def update_match(db: Session, match_id: uuid.UUID, data: MatchUpdate) -> Match:
     match = get_match(db, match_id)
-
-    if match.status == MatchStatus.COMPLETED and _score_fields_changed(data):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Winner information cannot be modified for completed matches",
-        )
-
     new_status = data.status if data.status is not None else match.status
+
+    if data.status == MatchStatus.SCHEDULED:
+        match.status = MatchStatus.SCHEDULED
+        match.winner_participant_id = None
+        match.winner_score = None
+        match.loser_score = None
+        db.commit()
+        db.refresh(match)
+        return match
 
     if _score_fields_changed(data) and new_status != MatchStatus.COMPLETED:
         raise HTTPException(
@@ -66,10 +68,6 @@ def update_match(db: Session, match_id: uuid.UUID, data: MatchUpdate) -> Match:
 
     if data.status is not None:
         match.status = data.status
-        if data.status == MatchStatus.SCHEDULED:
-            match.winner_participant_id = None
-            match.winner_score = None
-            match.loser_score = None
 
     db.commit()
     db.refresh(match)

@@ -369,13 +369,6 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  IF OLD.status = 'COMPLETED' AND NEW.status = 'COMPLETED' THEN
-    IF NEW.winner_participant_id IS DISTINCT FROM OLD.winner_participant_id
-       OR NEW.winner_score IS DISTINCT FROM OLD.winner_score THEN
-      RAISE EXCEPTION 'Winner cannot be modified for completed matches';
-    END IF;
-  END IF;
-
   v_new_status := COALESCE(NEW.status, OLD.status);
 
   IF (NEW.winner_participant_id IS DISTINCT FROM OLD.winner_participant_id

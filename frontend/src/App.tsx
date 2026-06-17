@@ -2528,6 +2528,9 @@ function MatchAdminControls({
   );
   const [loserScore, setLoserScore] = useState(String(match.loserScore ?? ""));
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
+  const [showEditConfirm, setShowEditConfirm] = useState(false);
+
+  const isCompleted = match.status === "Completed";
 
   const winnerName =
     winnerId === match.participant1Id ? match.playerA : match.playerB;
@@ -2593,6 +2596,34 @@ function MatchAdminControls({
     void handleSave(update);
   };
 
+  const submitEditResult = () => {
+    const wScoreRaw = winnerScore.trim();
+    const lScoreRaw = loserScore.trim();
+    const wScoreParsed = wScoreRaw === "" ? null : Number(wScoreRaw);
+    const lScoreParsed = lScoreRaw === "" ? null : Number(lScoreRaw);
+
+    if (wScoreParsed === null || Number.isNaN(wScoreParsed)) {
+      window.alert("Enter a valid winner score.");
+      return;
+    }
+
+    const update: {
+      status: MatchStatus;
+      winnerParticipantId: string;
+      winnerScore: number;
+      loserScore?: number;
+    } = {
+      status: "Completed",
+      winnerParticipantId: winnerId,
+      winnerScore: wScoreParsed,
+    };
+    if (lScoreParsed !== null && !Number.isNaN(lScoreParsed)) {
+      update.loserScore = lScoreParsed;
+    }
+    setShowEditConfirm(false);
+    void handleSave(update);
+  };
+
   const completeConfirmDialog =
     showCompleteConfirm &&
     createPortal(
@@ -2629,26 +2660,111 @@ function MatchAdminControls({
       document.body,
     );
 
-  const { playerAScore, playerBScore } = playerScoresForMatch(match);
-
-  if (match.status === "Completed") {
-    const completedWinnerName =
-      match.winnerParticipantId === match.participant1Id
-        ? match.playerA
-        : match.playerB;
-    return (
-      <div className="flex flex-col gap-1 text-xs text-slate-600 dark:text-slate-400">
-        <span>Winner: {completedWinnerName}</span>
-        <span>
-          {match.playerA}: {playerAScore ?? "—"} · {match.playerB}:{" "}
-          {playerBScore ?? "—"}
-        </span>
-        <span
-          className={`px-2 py-0.5 rounded-full text-xs font-bold w-fit bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300`}
+  const editConfirmDialog =
+    showEditConfirm &&
+    createPortal(
+      <div
+        className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        onClick={() => setShowEditConfirm(false)}
+      >
+        <div
+          className="glass-strong rounded-2xl max-w-sm w-full p-6 shadow-xl"
+          onClick={(e) => e.stopPropagation()}
         >
-          Completed
-        </span>
-      </div>
+          <p className="font-display text-lg font-bold mb-2">Save match result?</p>
+          <p className="text-sm text-slate-500 mb-6">
+            Update winner and scores for this completed match.
+          </p>
+          <div className="flex gap-3 justify-end">
+            <button
+              type="button"
+              onClick={() => setShowEditConfirm(false)}
+              className="px-4 py-2 rounded-xl glass text-sm font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={submitEditResult}
+              className="px-4 py-2 rounded-xl bg-accent-teal text-white text-sm font-semibold"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body,
+    );
+
+  const scoreInputs = (
+    <div className="flex flex-wrap items-center gap-2">
+      <label className="flex items-center gap-1 text-xs">
+        <span className="text-slate-500 max-w-[7rem] truncate">{winnerName}</span>
+        <input
+          type="number"
+          value={winnerScore}
+          onChange={(e) => setWinnerScore(e.target.value)}
+          className="w-16 px-2 py-0.5 rounded border text-xs"
+          placeholder="0"
+          min={0}
+        />
+      </label>
+      <label className="flex items-center gap-1 text-xs">
+        <span className="text-slate-500 max-w-[7rem] truncate">{loserName}</span>
+        <input
+          type="number"
+          value={loserScore}
+          onChange={(e) => setLoserScore(e.target.value)}
+          className="w-16 px-2 py-0.5 rounded border text-xs"
+          placeholder="optional"
+          min={0}
+        />
+      </label>
+    </div>
+  );
+
+  if (isCompleted) {
+    return (
+      <>
+        {editConfirmDialog}
+        <div className="flex flex-col gap-2">
+          <span
+            className={`px-2 py-0.5 rounded-full text-xs font-bold w-fit bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300`}
+          >
+            Completed
+          </span>
+          <select
+            value={winnerId}
+            onChange={(e) => setWinnerId(e.target.value)}
+            className="px-2 py-0.5 rounded border text-xs"
+          >
+            <option value={match.participant1Id}>{match.playerA}</option>
+            <option value={match.participant2Id}>{match.playerB}</option>
+          </select>
+          {scoreInputs}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowEditConfirm(true);
+            }}
+            className="text-xs text-accent-teal hover:underline text-left font-semibold"
+          >
+            Save changes
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowEditConfirm(false);
+              void handleSave({ status: "Scheduled" });
+            }}
+            className="text-red-600 dark:text-red-400 text-xs font-semibold hover:underline text-left w-fit"
+          >
+            Reset to scheduled
+          </button>
+        </div>
+      </>
     );
   }
 
@@ -2688,34 +2804,7 @@ function MatchAdminControls({
         <option value={match.participant1Id}>{match.playerA}</option>
         <option value={match.participant2Id}>{match.playerB}</option>
       </select>
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="flex items-center gap-1 text-xs">
-          <span className="text-slate-500 max-w-[7rem] truncate">
-            {winnerName}
-          </span>
-          <input
-            type="number"
-            value={winnerScore}
-            onChange={(e) => setWinnerScore(e.target.value)}
-            className="w-16 px-2 py-0.5 rounded border text-xs"
-            placeholder="0"
-            min={0}
-          />
-        </label>
-        <label className="flex items-center gap-1 text-xs">
-          <span className="text-slate-500 max-w-[7rem] truncate">
-            {loserName}
-          </span>
-          <input
-            type="number"
-            value={loserScore}
-            onChange={(e) => setLoserScore(e.target.value)}
-            className="w-16 px-2 py-0.5 rounded border text-xs"
-            placeholder="optional"
-            min={0}
-          />
-        </label>
-      </div>
+      {scoreInputs}
       <button
         type="button"
         onClick={(e) => {
@@ -3458,6 +3547,11 @@ function Footer() {
                 Carrom Tournament 2026 · Internal Event
               </p>
             </div>
+          </div>
+          <div className="text-center md:text-right text-sm text-slate-600 dark:text-slate-300">
+            <p>Gopichand · Sai Mohan Reddy</p>
+            <p className="mt-1">Sharan Reddi · Mani Kumar Reddy Kancharla</p>
+            <p className="mt-1">Lochan Sindunoori</p>
           </div>
         </div>
       </div>

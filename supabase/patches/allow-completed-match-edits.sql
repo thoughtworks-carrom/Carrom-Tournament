@@ -1,7 +1,5 @@
--- Run once: add optional loser_score to matches (winner_score stays as-is).
-
-ALTER TABLE matches
-  ADD COLUMN IF NOT EXISTS loser_score integer;
+-- Allow editing winner and scores on completed matches (admin app + SQL).
+-- Run once in Supabase SQL Editor.
 
 CREATE OR REPLACE FUNCTION public.validate_match_update()
 RETURNS trigger
@@ -18,7 +16,6 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Completed matches: winner and scores may be edited (admin app)
   v_new_status := COALESCE(NEW.status, OLD.status);
 
   IF (NEW.winner_participant_id IS DISTINCT FROM OLD.winner_participant_id
@@ -44,34 +41,5 @@ BEGIN
 
   NEW.updated_at := now();
   RETURN NEW;
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION public.reset_all_match_results()
-RETURNS integer
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  n integer;
-BEGIN
-  IF NOT is_admin() THEN
-    RAISE EXCEPTION 'Admin only';
-  END IF;
-
-  UPDATE matches
-  SET status = 'SCHEDULED',
-      winner_participant_id = NULL,
-      winner_score = NULL,
-      loser_score = NULL,
-      updated_at = now()
-  WHERE status IN ('COMPLETED', 'LIVE')
-     OR winner_participant_id IS NOT NULL
-     OR winner_score IS NOT NULL
-     OR loser_score IS NOT NULL;
-
-  GET DIAGNOSTICS n = ROW_COUNT;
-  RETURN n;
 END;
 $$;
