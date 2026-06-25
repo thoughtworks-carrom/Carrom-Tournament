@@ -132,8 +132,20 @@ function patchMatchInTournament(
 
 function LiveMatchesBanner({
   matches,
+  adminMode,
+  onMatchUpdate,
 }: {
   matches: { match: GroupMatch; group: string; category: string }[];
+  adminMode: boolean;
+  onMatchUpdate: (
+    matchId: string,
+    update: {
+      status?: MatchStatus;
+      winnerParticipantId?: string;
+      winnerScore?: number;
+      loserScore?: number;
+    },
+  ) => Promise<void>;
 }) {
   if (matches.length === 0) return null;
 
@@ -177,9 +189,22 @@ function LiveMatchesBanner({
             <p className="text-sm text-slate-500 mt-1">
               {group} · {category}
             </p>
-            <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse">
-              Live
-            </span>
+            {adminMode ? (
+              <div className="mt-3">
+                <MatchAdminControls
+                  match={match}
+                  groupName={group}
+                  categoryName={category}
+                  onSave={async (m, update) => {
+                    await onMatchUpdate(m.id, update);
+                  }}
+                />
+              </div>
+            ) : (
+              <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse">
+                Live
+              </span>
+            )}
           </li>
         ))}
       </ul>
@@ -3824,7 +3849,11 @@ export default function App() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <LiveMatchesBanner matches={liveMatches} />
+        <LiveMatchesBanner
+          matches={liveMatches}
+          adminMode={adminMode}
+          onMatchUpdate={handleMatchUpdate}
+        />
       </div>
 
       <CategoryTournamentSection
