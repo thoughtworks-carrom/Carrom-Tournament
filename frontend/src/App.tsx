@@ -3576,7 +3576,6 @@ function Footer() {
           <div className="text-center md:text-right text-sm text-slate-600 dark:text-slate-300">
             <p>Gopichand · Sai Mohan Reddy</p>
             <p className="mt-1">Sharan Reddi · Mani Kumar Reddy Kancharla</p>
-            <p className="mt-1">Lochan Sindunoori</p>
           </div>
         </div>
       </div>
