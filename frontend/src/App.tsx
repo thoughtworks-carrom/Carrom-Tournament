@@ -47,6 +47,7 @@ import {
   signOutAdmin,
   usesSupabaseAuth,
 } from "./lib/auth";
+import { useSupabase } from "./lib/config";
 import { supabase } from "./lib/supabase";
 import {
   CategoryData,
@@ -86,12 +87,15 @@ import {
 import {
   adjustBoards,
   adjustPoints,
+  categoryForKnockoutMatchId,
   collectLiveKnockoutMatches,
   completeKnockoutMatch,
   loadKnockoutState,
+  mapRowToKnockoutState,
   resolveKnockoutBracket,
   saveKnockoutState,
   updateKnockoutMatch,
+  type ApiKnockoutRow,
   type KnockoutMatchState,
   type KnockoutStateMap,
   type ResolvedKnockoutMatch,
@@ -4024,6 +4028,26 @@ export default function App() {
   }, [loadTournament]);
 
   useEffect(() => {
+    const sb = supabase;
+    if (!useSupabase() || !sb) return;
+
+    const channel = sb
+      .channel("group-matches-sync")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "matches" },
+        () => {
+          void loadTournament(true);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void sb.removeChannel(channel);
+    };
+  }, [loadTournament]);
+
+  useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [dark]);
@@ -4051,9 +4075,72 @@ export default function App() {
     () => computeTournamentMatchProgress(displayTournament),
     [displayTournament],
   );
-  const [knockoutState, setKnockoutState] = useState<KnockoutStateMap>(loadKnockoutState);
+  const [knockoutState, setKnockoutState] = useState<KnockoutStateMap>({});
+
+  const persistKnockoutMatch = useCallback(
+    (matchId: string, state: KnockoutMatchState) => {
+      void api
+        .upsertKnockoutMatch(
+          matchId,
+          categoryForKnockoutMatchId(matchId),
+          state,
+        )
+        .catch((e) => {
+          console.error("Knockout save failed:", e);
+        });
+    },
+    [],
+  );
 
   useEffect(() => {
+    const sb = supabase;
+    if (!useSupabase() || !sb) {
+      setKnockoutState(loadKnockoutState());
+      return;
+    }
+
+    let cancelled = false;
+    api
+      .getKnockoutState()
+      .then((state) => {
+        if (cancelled) return;
+        if (Object.keys(state).length > 0) {
+          setKnockoutState(state);
+          return;
+        }
+        const local = loadKnockoutState();
+        if (Object.keys(local).length > 0) {
+          setKnockoutState(local);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setKnockoutState(loadKnockoutState());
+      });
+
+    const channel = sb
+      .channel("knockout-matches-sync")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "knockout_matches" },
+        (payload) => {
+          const row = payload.new as ApiKnockoutRow | undefined;
+          if (!row?.id) return;
+          setKnockoutState((prev) => ({
+            ...prev,
+            [row.id]: mapRowToKnockoutState(row),
+          }));
+        },
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      void sb.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (useSupabase()) return;
     saveKnockoutState(knockoutState);
   }, [knockoutState]);
 
@@ -4122,6 +4209,7 @@ export default function App() {
         const match = allResolved.find((m) => m.id === matchId);
         if (!match) return prev;
         const next = updateKnockoutMatch(prev, match, patch);
+        persistKnockoutMatch(matchId, next[matchId]);
         if (patch.status === "Live") {
           requestAnimationFrame(() => {
             document
@@ -4132,21 +4220,29 @@ export default function App() {
         return next;
       });
     },
-    [displayTournament],
+    [displayTournament, persistKnockoutMatch],
   );
 
   const handleKnockoutBoards = useCallback(
     (match: ResolvedKnockoutMatch, side: "A" | "B", delta: number) => {
-      setKnockoutState((prev) => adjustBoards(prev, match, side, delta));
+      setKnockoutState((prev) => {
+        const next = adjustBoards(prev, match, side, delta);
+        persistKnockoutMatch(match.id, next[match.id]);
+        return next;
+      });
     },
-    [],
+    [persistKnockoutMatch],
   );
 
   const handleKnockoutPoints = useCallback(
     (match: ResolvedKnockoutMatch, side: "A" | "B", delta: number) => {
-      setKnockoutState((prev) => adjustPoints(prev, match, side, delta));
+      setKnockoutState((prev) => {
+        const next = adjustPoints(prev, match, side, delta);
+        persistKnockoutMatch(match.id, next[match.id]);
+        return next;
+      });
     },
-    [],
+    [persistKnockoutMatch],
   );
 
   const handleKnockoutComplete = useCallback(
@@ -4174,10 +4270,12 @@ export default function App() {
         ];
         const match = allResolved.find((m) => m.id === matchId);
         if (!match) return prev;
-        return completeKnockoutMatch(prev, match, winnerSide);
+        const next = completeKnockoutMatch(prev, match, winnerSide);
+        persistKnockoutMatch(matchId, next[matchId]);
+        return next;
       });
     },
-    [displayTournament],
+    [displayTournament, persistKnockoutMatch],
   );
 
   const liveMatches = useMemo(() => {

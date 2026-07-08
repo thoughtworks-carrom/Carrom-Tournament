@@ -342,3 +342,22 @@ export function buildWomensSinglesKnockout(
     ],
   };
 }
+
+/** All knockout fixture ids for DB seeding and sync. */
+export function allKnockoutFixtures(): { id: string; category: string }[] {
+  const empty = { category: "", categoryId: "", groups: [] } as CategoryData;
+  const brackets = [
+    { category: "Men's Singles", bracket: buildMensSinglesKnockout(empty) },
+    { category: "Men's Doubles", bracket: buildMensDoublesKnockout(empty) },
+    { category: "Women's Singles", bracket: buildWomensSinglesKnockout(empty) },
+  ];
+  const fixtures: { id: string; category: string }[] = [];
+  for (const { category, bracket } of brackets) {
+    for (const round of bracket.rounds) {
+      for (const match of round.matches) {
+        fixtures.push({ id: match.id, category });
+      }
+    }
+  }
+  return fixtures;
+}

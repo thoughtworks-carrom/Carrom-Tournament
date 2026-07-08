@@ -21,6 +21,75 @@ export type KnockoutStateMap = Record<string, KnockoutMatchState>;
 
 const STORAGE_KEY = "carrom-knockout-state-v1";
 
+export type ApiKnockoutRow = {
+  id: string;
+  category_name: string;
+  status: "SCHEDULED" | "LIVE" | "COMPLETED";
+  boards_a: number;
+  boards_b: number;
+  points_a: number;
+  points_b: number;
+  winner_side: "A" | "B" | null;
+  notes: string | null;
+};
+
+export function categoryForKnockoutMatchId(matchId: string): string {
+  if (matchId.startsWith("ms-")) return "Men's Singles";
+  if (matchId.startsWith("md-")) return "Men's Doubles";
+  if (matchId.startsWith("ws-")) return "Women's Singles";
+  return "Knockout";
+}
+
+function fromDbKnockoutStatus(status: ApiKnockoutRow["status"]): KnockoutStatus {
+  if (status === "LIVE") return "Live";
+  if (status === "COMPLETED") return "Completed";
+  return "Scheduled";
+}
+
+function toDbKnockoutStatus(status: KnockoutStatus): ApiKnockoutRow["status"] {
+  if (status === "Live") return "LIVE";
+  if (status === "Completed") return "COMPLETED";
+  return "SCHEDULED";
+}
+
+export function mapRowToKnockoutState(row: ApiKnockoutRow): KnockoutMatchState {
+  return {
+    status: fromDbKnockoutStatus(row.status),
+    boardsA: row.boards_a,
+    boardsB: row.boards_b,
+    pointsA: row.points_a,
+    pointsB: row.points_b,
+    winnerSide: row.winner_side ?? undefined,
+    notes: row.notes ?? undefined,
+  };
+}
+
+export function mapKnockoutStateToRow(
+  matchId: string,
+  category: string,
+  state: KnockoutMatchState,
+): Omit<ApiKnockoutRow, "id"> & { id: string } {
+  return {
+    id: matchId,
+    category_name: category,
+    status: toDbKnockoutStatus(state.status),
+    boards_a: state.boardsA,
+    boards_b: state.boardsB,
+    points_a: state.pointsA ?? 0,
+    points_b: state.pointsB ?? 0,
+    winner_side: state.winnerSide ?? null,
+    notes: state.notes ?? null,
+  };
+}
+
+export function rowsToKnockoutStateMap(rows: ApiKnockoutRow[]): KnockoutStateMap {
+  const map: KnockoutStateMap = {};
+  for (const row of rows) {
+    map[row.id] = mapRowToKnockoutState(row);
+  }
+  return map;
+}
+
 export function boardsToWin(format: KnockoutMatchFormat): number {
   if (format.type === "best-of") return format.boards === 5 ? 3 : 2;
   return format.maxBoards;

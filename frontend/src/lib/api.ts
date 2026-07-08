@@ -49,6 +49,8 @@ export const api = {
   deleteGalleryImage: client.deleteGalleryImage,
   seedTournamentData: client.seedTournamentData,
   resetAllMatchResults: client.resetAllMatchResults,
+  getKnockoutState: client.getKnockoutState,
+  upsertKnockoutMatch: client.upsertKnockoutMatch,
 };
 
 export function galleryImageUrl(urlPath: string) {

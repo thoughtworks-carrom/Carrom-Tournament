@@ -1,5 +1,12 @@
 import { requireSupabase } from "./supabase";
 import { computeStandings, enrichMatch } from "./standings";
+import {
+  type ApiKnockoutRow,
+  type KnockoutMatchState,
+  type KnockoutStateMap,
+  mapKnockoutStateToRow,
+  rowsToKnockoutStateMap,
+} from "./knockout-state";
 import type {
   ApiCategory,
   ApiGalleryImage,
@@ -648,6 +655,27 @@ export const supabaseClient = {
     if (row?.storage_path) {
       await sb.storage.from(GALLERY_BUCKET).remove([row.storage_path as string]);
     }
+  },
+
+  getKnockoutState: async (): Promise<KnockoutStateMap> => {
+    const sb = requireSupabase();
+    const { data, error } = await sb.from("knockout_matches").select("*");
+    if (error) sbError(error);
+    return rowsToKnockoutStateMap((data ?? []) as ApiKnockoutRow[]);
+  },
+
+  upsertKnockoutMatch: async (
+    matchId: string,
+    category: string,
+    state: KnockoutMatchState,
+  ): Promise<void> => {
+    const sb = await requireAdminSession();
+    const row = {
+      ...mapKnockoutStateToRow(matchId, category, state),
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = await sb.from("knockout_matches").upsert(row);
+    if (error) sbError(error);
   },
 };
 

@@ -1,5 +1,11 @@
 // FastAPI backend client (optional — set VITE_USE_FASTAPI=true)
 import { getAdminKey } from "./auth";
+import {
+  loadKnockoutState,
+  saveKnockoutState,
+  type KnockoutMatchState,
+  type KnockoutStateMap,
+} from "./knockout-state";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -171,6 +177,18 @@ export const fastapiClient = {
 
   resetAllMatchResults: async () => {
     throw new Error("Reset all matches is only supported with Supabase");
+  },
+
+  getKnockoutState: async (): Promise<KnockoutStateMap> => loadKnockoutState(),
+
+  upsertKnockoutMatch: async (
+    matchId: string,
+    _category: string,
+    state: KnockoutMatchState,
+  ): Promise<void> => {
+    const map = loadKnockoutState();
+    map[matchId] = state;
+    saveKnockoutState(map);
   },
 };
 
