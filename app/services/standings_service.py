@@ -16,6 +16,7 @@ from app.utils.match_names import resolve_participant_name
 
 WIN_POINTS = 2
 LOSS_POINTS = 0
+DRAW_POINTS = 1
 
 
 def calculate_standings(db: Session, group_id: uuid.UUID) -> list[StandingEntry]:
@@ -68,6 +69,19 @@ def calculate_standings(db: Session, group_id: uuid.UUID) -> list[StandingEntry]
             stats[pid]["matches_played"] += 1
 
         if winner is None:
+            is_draw = (
+                match.winner_score is None and match.loser_score is None
+            ) or (
+                match.winner_score is not None
+                and match.loser_score is not None
+                and match.winner_score == match.loser_score
+            )
+            if is_draw:
+                for pid in (p1, p2):
+                    if pid in stats:
+                        stats[pid]["tournament_points"] += DRAW_POINTS
+                        if match.winner_score is not None:
+                            stats[pid]["score"] += match.winner_score
             continue
 
         loser = p2 if winner == p1 else p1

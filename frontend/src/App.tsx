@@ -67,6 +67,35 @@ import {
   hasAnyGroups,
   hasAnyMatches,
 } from "./lib/export-excel";
+import {
+  MensKnockoutFlowchart,
+  MensDoublesKnockoutFlowchart,
+  WomensKnockoutFlowchart,
+  KnockoutPlayerName,
+} from "./components/KnockoutBracket";
+import {
+  KnockoutMatchDetailPanel,
+  KnockoutMatchModal,
+} from "./components/KnockoutMatchDetail";
+import {
+  buildMensSinglesKnockout,
+  buildMensDoublesKnockout,
+  buildWomensSinglesKnockout,
+  formatLabel,
+} from "./lib/knockouts";
+import {
+  adjustBoards,
+  adjustPoints,
+  collectLiveKnockoutMatches,
+  completeKnockoutMatch,
+  loadKnockoutState,
+  resolveKnockoutBracket,
+  saveKnockoutState,
+  updateKnockoutMatch,
+  type KnockoutMatchState,
+  type KnockoutStateMap,
+  type ResolvedKnockoutMatch,
+} from "./lib/knockout-state";
 
 const publicAsset = (file: string) => `${import.meta.env.BASE_URL}${file}`;
 
@@ -83,6 +112,16 @@ const DISPLAY_CATEGORIES = [
   "Men's Doubles",
   "Mixed Doubles",
 ] as const;
+
+/** Group-stage and knockout match lists hidden from public for these categories. */
+const ADMIN_ONLY_MATCH_CATEGORIES = new Set<Category>([
+  "Women's Singles",
+  "Men's Doubles",
+]);
+
+function isAdminOnlyMatchCategory(category: string): boolean {
+  return ADMIN_ONLY_MATCH_CATEGORIES.has(category as Category);
+}
 
 const GALLERY_PREVIEW_COUNT = 6;
 const GALLERY_DRIVE_URL =
@@ -132,10 +171,15 @@ function patchMatchInTournament(
 
 function LiveMatchesBanner({
   matches,
+  knockoutLive,
   adminMode,
   onMatchUpdate,
+  onKnockoutUpdate,
+  onKnockoutBoards,
+  onKnockoutComplete,
 }: {
   matches: { match: GroupMatch; group: string; category: string }[];
+  knockoutLive: { match: ResolvedKnockoutMatch; category: string }[];
   adminMode: boolean;
   onMatchUpdate: (
     matchId: string,
@@ -146,26 +190,29 @@ function LiveMatchesBanner({
       loserScore?: number;
     },
   ) => Promise<void>;
+  onKnockoutUpdate: (matchId: string, patch: Partial<KnockoutMatchState>) => void;
+  onKnockoutBoards: (match: ResolvedKnockoutMatch, side: "A" | "B", delta: number) => void;
+  onKnockoutComplete: (matchId: string, winnerSide: "A" | "B") => void;
 }) {
-  if (matches.length === 0) return null;
+  if (matches.length === 0 && knockoutLive.length === 0) return null;
 
   return (
     <motion.div
       id="live-matches"
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="mb-8 p-6 rounded-2xl border-2 border-red-500/50 bg-red-500/10 dark:bg-red-500/20 relative overflow-hidden"
+      className="mb-8 p-6 rounded-2xl border-2 border-tw-coral/40 bg-gradient-to-br from-tw-coral/10 via-white/60 to-tw-magenta/5 dark:from-tw-coral/15 dark:via-slate-900/50 dark:to-tw-purple/10 relative overflow-hidden shadow-lg shadow-tw-coral/10"
     >
-      <div className="absolute top-0 right-0 px-4 py-1 bg-red-500 text-white text-xs font-bold rounded-bl-xl flex items-center gap-1">
+      <div className="absolute top-0 right-0 px-4 py-1 bg-gradient-to-r from-tw-coral to-tw-magenta text-white text-xs font-bold rounded-bl-xl flex items-center gap-1">
         <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
         LIVE
       </div>
-      <h3 className="font-display text-lg font-bold mb-4">Live Matches</h3>
+      <h3 className="font-display text-lg font-bold mb-4 text-tw-purple dark:text-white">Live Matches</h3>
       <ul className="space-y-3">
         {matches.map(({ match, group, category }) => (
           <li
             key={match.id}
-            className="p-4 rounded-xl bg-white/60 dark:bg-slate-900/40 border border-red-500/20"
+            className="p-4 rounded-xl bg-white/70 dark:bg-slate-900/50 border border-tw-coral/25 shadow-sm hover:shadow-md hover:border-tw-coral/40 transition-all duration-300"
           >
             <p className="text-xl font-bold">
               <PlayerLink
@@ -176,7 +223,7 @@ function LiveMatchesBanner({
                     : null
                 }
               />
-              <span className="text-red-500 mx-2">vs</span>
+              <span className="text-tw-coral mx-2 font-semibold">vs</span>
               <PlayerLink
                 name={match.playerB}
                 employeeId={
@@ -201,8 +248,45 @@ function LiveMatchesBanner({
                 />
               </div>
             ) : (
-              <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse">
+              <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-bold bg-tw-coral text-white animate-pulse-soft shadow-sm shadow-tw-coral/30">
                 Live
+              </span>
+            )}
+          </li>
+        ))}
+        {knockoutLive.map(({ match, category }) => (
+          <li
+            key={match.id}
+            className="p-4 rounded-xl bg-white/70 dark:bg-slate-900/50 border border-tw-coral/25 shadow-sm hover:shadow-md hover:border-tw-coral/40 transition-all duration-300"
+          >
+            <p className="text-xl font-bold">
+              <KnockoutPlayerName slot={match.resolvedA} />
+              <span className="text-tw-coral mx-2 font-semibold">vs</span>
+              <KnockoutPlayerName slot={match.resolvedB} />
+            </p>
+            <p className="text-sm text-slate-500 mt-1">
+              {match.label} · {category} · Knockout
+            </p>
+            {adminMode ? (
+              <div className="mt-3">
+                <KnockoutMatchDetailPanel
+                  match={match}
+                  adminMode={adminMode}
+                  onUpdate={(patch) => onKnockoutUpdate(match.id, patch)}
+                  onBoards={(side, delta) => onKnockoutBoards(match, side, delta)}
+                  onComplete={(side) => onKnockoutComplete(match.id, side)}
+                  renderPlayer={(name, employeeId, className) => (
+                    <PlayerLink
+                      name={name}
+                      employeeId={employeeId}
+                      className={className}
+                    />
+                  )}
+                />
+              </div>
+            ) : (
+              <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-bold bg-tw-coral text-white animate-pulse-soft shadow-sm shadow-tw-coral/30">
+                Live · {formatLabel(match.format)}
               </span>
             )}
           </li>
@@ -262,6 +346,7 @@ const RULES_CATEGORIES = [
 const NAV_LINKS = [
   { id: "hero", label: "Home" },
   { id: "categories", label: "Categories" },
+  { id: "knockouts", label: "Knockouts" },
   { id: "rules", label: "Rules" },
   { id: "scoring", label: "Scoring" },
   { id: "standings", label: "Standings" },
@@ -273,13 +358,13 @@ const CATEGORY_META: Record<
   string,
   { icon: React.ElementType; color: string }
 > = {
-  "Men's Singles": { icon: Target, color: "from-blue-500/20 to-blue-600/5" },
-  "Women's Singles": { icon: Zap, color: "from-pink-500/20 to-pink-600/5" },
+  "Men's Singles": { icon: Target, color: "from-tw-purple/25 to-tw-violet/10" },
+  "Women's Singles": { icon: Zap, color: "from-tw-magenta/25 to-tw-coral/10" },
   "Men's Doubles": {
     icon: Users,
-    color: "from-emerald-500/20 to-emerald-600/5",
+    color: "from-tw-teal/25 to-tw-purple/10",
   },
-  "Mixed Doubles": { icon: Award, color: "from-teal-500/20 to-teal-600/5" },
+  "Mixed Doubles": { icon: Award, color: "from-tw-violet/25 to-tw-teal/10" },
 };
 
 function getCategoryMeta(name: string) {
@@ -990,7 +1075,7 @@ function PlayerLink({
       href={`https://jigsaw.thoughtworks.net/consultants/${employeeId}`}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex items-center gap-1 hover:text-accent-teal transition-colors ${className}`}
+      className={`inline-flex items-center gap-1 hover:text-tw-teal transition-colors ${className}`}
     >
       {name}
       <ExternalLink className="w-3.5 h-3.5 opacity-60" />
@@ -1011,7 +1096,7 @@ function GlassCard({
     <motion.div
       whileHover={hover ? { y: -4, scale: 1.01 } : undefined}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className={`glass rounded-2xl p-6 ${className}`}
+      className={`glass rounded-2xl p-6 transition-shadow duration-300 hover:shadow-xl hover:shadow-tw-purple/10 ${className}`}
     >
       {children}
     </motion.div>
@@ -1035,15 +1120,15 @@ function SectionHeader({
       className="text-center mb-12"
     >
       {Icon && (
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-accent-teal/10 dark:bg-accent-teal/20 text-accent-teal mb-4">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-tw-purple/15 to-tw-teal/15 dark:from-tw-purple/25 dark:to-tw-teal/20 text-tw-purple dark:text-tw-teal mb-4 shadow-md shadow-tw-purple/10">
           <Icon className="w-7 h-7" />
         </div>
       )}
-      <h2 className="font-display text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-3">
+      <h2 className="font-display text-3xl md:text-4xl font-bold text-tw-ink dark:text-white mb-3">
         {title}
       </h2>
       {subtitle && (
-        <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+        <p className="text-tw-purple/70 dark:text-slate-400 max-w-2xl mx-auto">
           {subtitle}
         </p>
       )}
@@ -1054,19 +1139,19 @@ function SectionHeader({
 function RankBadge({ rank }: { rank: number }) {
   if (rank === 1)
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-xs font-bold">
+      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-tw-magenta/15 dark:bg-tw-magenta/25 text-tw-magenta dark:text-tw-teal border border-tw-magenta/30 text-xs font-bold">
         <Trophy className="w-3.5 h-3.5" /> 1st
       </span>
     );
   if (rank === 2)
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold">
+      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-tw-violet/15 dark:bg-tw-violet/25 text-tw-purple dark:text-tw-violet border border-tw-violet/30 text-xs font-bold">
         2nd
       </span>
     );
   if (rank === 3)
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 text-xs font-bold">
+      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-tw-coral/15 dark:bg-tw-coral/25 text-tw-coral dark:text-tw-coral border border-tw-coral/30 text-xs font-bold">
         3rd
       </span>
     );
@@ -1125,7 +1210,7 @@ function Navbar({
               <button
                 key={link.id}
                 onClick={() => scrollTo(link.id)}
-                className="px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-accent-teal dark:hover:text-accent-teal rounded-lg transition-colors"
+                className="px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-tw-teal dark:hover:text-tw-teal rounded-lg transition-colors"
               >
                 {link.label}
               </button>
@@ -1179,7 +1264,7 @@ function Navbar({
                       scrollTo(link.id);
                       setMenuOpen(false);
                     }}
-                    className="px-4 py-3 text-left font-medium rounded-lg hover:bg-accent-teal/10 dark:hover:bg-accent-teal/20 transition-colors"
+                    className="px-4 py-3 text-left font-medium rounded-lg hover:bg-tw-teal/10 dark:hover:bg-tw-teal/15 transition-colors"
                   >
                     {link.label}
                   </button>
@@ -1237,7 +1322,7 @@ function Hero({
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-sm font-medium text-accent-teal mb-6"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-sm font-medium text-tw-purple dark:text-tw-teal mb-6 border-tw-purple/20"
           >
             <Sparkles className="w-4 h-4" />
             Thoughtworks Hyderabad Office
@@ -1257,7 +1342,7 @@ function Hero({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => scrollTo("rules")}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-board-dark hover:bg-board text-white shadow-lg shadow-board-dark/30 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-gradient-to-r from-tw-purple to-tw-magenta hover:from-tw-purple/90 hover:to-tw-magenta/90 text-white shadow-lg shadow-tw-magenta/25 transition-all"
             >
               <Shield className="w-5 h-5" />
               View Rules
@@ -1266,7 +1351,7 @@ function Hero({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
               onClick={onViewStandings}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-accent-teal hover:bg-accent-teal/90 text-white shadow-lg shadow-accent-teal/30 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-gradient-to-r from-tw-teal to-tw-purple hover:opacity-95 text-white shadow-lg shadow-tw-teal/30 transition-all"
             >
               <Trophy className="w-5 h-5" />
               View Standings
@@ -1275,7 +1360,7 @@ function Hero({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
               onClick={onViewStandings}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-board-dark hover:bg-board text-white shadow-lg shadow-board-dark/30 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold glass text-tw-purple dark:text-tw-teal hover:bg-tw-teal/10 border border-tw-purple/20 shadow-md transition-all"
             >
               <Calendar className="w-5 h-5" />
               Group Schedules
@@ -1345,7 +1430,7 @@ function MatchProgressBar({ progress }: { progress: MatchProgress }) {
   return (
     <div className="h-1.5 rounded-full bg-slate-200/80 dark:bg-slate-700/80 overflow-hidden">
       <div
-        className="h-full rounded-full bg-accent-teal transition-all duration-500"
+        className="h-full rounded-full bg-gradient-to-r from-tw-teal via-tw-purple to-tw-magenta transition-all duration-500"
         style={{ width: `${pct}%` }}
       />
     </div>
@@ -1490,7 +1575,7 @@ function Categories({
 
 function RulesSection() {
   return (
-    <section id="rules" className="py-20 bg-slate-50/50 dark:bg-slate-900/30">
+    <section id="rules" className="py-20 bg-gradient-to-b from-white via-tw-mist/30 to-white dark:from-slate-900 dark:via-tw-purple/5 dark:to-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeader
           title="Tournament Rules"
@@ -2587,9 +2672,17 @@ function MatchAdminControls({
     winnerScore?: number;
     loserScore?: number;
   }) => {
-    await onSave(match, update);
-    if (update.status === "Completed") {
-      resetMatchForm();
+    try {
+      await onSave(match, update);
+      if (update.status === "Completed") {
+        resetMatchForm();
+      }
+    } catch (e) {
+      window.alert(
+        e instanceof Error
+          ? e.message
+          : "Could not save match result. Sign in as admin and try again.",
+      );
     }
   };
 
@@ -2866,10 +2959,10 @@ function CategoryTabs({
           <button
             key={cat}
             onClick={() => onChange(cat)}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
               isActive
-                ? "bg-accent-teal text-white shadow-lg shadow-accent-teal/30"
-                : "glass text-slate-700 dark:text-slate-300 hover:bg-accent-teal/10"
+                ? "bg-gradient-to-r from-tw-purple to-tw-magenta text-white shadow-lg shadow-tw-magenta/25 scale-[1.02]"
+                : "glass text-slate-700 dark:text-slate-300 hover:bg-tw-teal/10 hover:border-tw-teal/30"
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -2899,10 +2992,10 @@ function GroupTabs({
           <button
             key={group.id}
             onClick={() => onChange(group.id)}
-            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
               isActive
-                ? "bg-board-dark text-white shadow-lg shadow-board-dark/30 dark:bg-board-light dark:text-board-dark"
-                : "glass text-slate-700 dark:text-slate-300 hover:bg-board/10"
+                ? "bg-gradient-to-r from-tw-purple to-tw-violet text-white shadow-lg shadow-tw-purple/25"
+                : "glass text-slate-700 dark:text-slate-300 hover:bg-tw-purple/10"
             }`}
           >
             {group.name}
@@ -2948,7 +3041,7 @@ function MatchProgressSummary({
             key={cat.category}
             className={`rounded-xl px-3 py-2.5 ${
               cat.category === activeCategory
-                ? "bg-accent-teal/10 ring-1 ring-accent-teal/30"
+                ? "bg-tw-teal/10 ring-1 ring-tw-teal/35 shadow-sm"
                 : "bg-slate-100/80 dark:bg-slate-800/50"
             }`}
           >
@@ -3005,11 +3098,11 @@ function CategoryTournamentSection({
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const categoryData = data.find((d) => d.category === activeCategory);
   const statusColors: Record<MatchStatus, string> = {
-    Live: "bg-red-500 text-white animate-pulse",
+    Live: "bg-tw-coral text-white animate-pulse-soft shadow-sm shadow-tw-coral/30",
     Scheduled:
-      "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",
+      "bg-tw-mist dark:bg-slate-700/50 text-tw-purple/80 dark:text-slate-300 border border-tw-purple/20",
     Completed:
-      "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300",
+      "bg-tw-teal/20 text-tw-purple dark:text-tw-teal border border-tw-teal/40",
   };
 
   const filteredGroups = useMemo(() => {
@@ -3047,6 +3140,8 @@ function CategoryTournamentSection({
   }, [filteredGroups, activeCategory]);
 
   const activeGroup = filteredGroups.find((g) => g.id === activeGroupId);
+  const showMatches =
+    adminMode || !isAdminOnlyMatchCategory(activeCategory);
   const matchProgress = useMemo(
     () => computeTournamentMatchProgress(data),
     [data],
@@ -3074,7 +3169,7 @@ function CategoryTournamentSection({
   return (
     <section
       id="standings"
-      className="py-20 bg-slate-50/50 dark:bg-slate-900/30"
+      className="py-20 bg-gradient-to-b from-tw-mist/40 via-white to-tw-teal/5 dark:from-slate-900 dark:via-slate-900 dark:to-tw-purple/10"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeader
@@ -3089,7 +3184,7 @@ function CategoryTournamentSection({
               type="button"
               onClick={() => void exportTournamentExcel(data)}
               disabled={!hasAnyGroups(data)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-teal text-white font-semibold text-sm shadow-lg shadow-accent-teal/25 hover:bg-accent-teal/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-tw-teal to-tw-purple text-white font-semibold text-sm shadow-lg shadow-tw-teal/25 hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               <Download className="w-4 h-4" />
               Download Excel (group standings)
@@ -3098,7 +3193,7 @@ function CategoryTournamentSection({
               type="button"
               onClick={() => void exportMatchScheduleExcel(data)}
               disabled={!hasAnyMatches(data)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-board-dark dark:bg-board text-white font-semibold text-sm shadow-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-tw-purple to-tw-magenta text-white font-semibold text-sm shadow-lg shadow-tw-purple/25 hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               <Download className="w-4 h-4" />
               Download Excel (match schedule)
@@ -3165,7 +3260,7 @@ function CategoryTournamentSection({
                 </div>
               </div>
 
-              <div className="p-6 grid lg:grid-cols-2 gap-8">
+              <div className={`p-6 grid gap-8 ${showMatches ? "lg:grid-cols-2" : ""}`}>
                 <div>
                   <h4 className="font-display font-semibold mb-3 flex items-center gap-2">
                     <Users className="w-5 h-5 text-accent-teal" />
@@ -3228,7 +3323,7 @@ function CategoryTournamentSection({
                           (entry, idx) => (
                             <tr
                               key={entry.id}
-                              className="border-b border-slate-100 dark:border-slate-800 hover:bg-accent-teal/5"
+                              className="border-b border-slate-100 dark:border-slate-800 hover:bg-tw-teal/5 transition-colors duration-200"
                             >
                               <td className="px-3 py-3">
                                 <RankBadge rank={idx + 1} />
@@ -3261,21 +3356,24 @@ function CategoryTournamentSection({
                   </div>
                 </div>
 
+                {showMatches && (
                 <div>
                   <h4 className="font-display font-semibold mb-3 flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-accent-teal" />
                     Matches
                   </h4>
-                  <div className="space-y-2 max-h-[720px] overflow-y-auto pr-1">
+                  <div className="space-y-4 max-h-[720px] overflow-y-auto pr-1">
                     {activeGroup.matches.map((match, mi) => {
                       const scores = playerScoresForMatch(match);
                       return (
                         <div
                           key={match.id}
-                          className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 rounded-xl glass text-sm ${
+                          className={`tw-match-card flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 text-sm ${
                             match.status === "Live"
-                              ? "ring-2 ring-red-500/40"
-                              : ""
+                              ? "ring-2 ring-tw-coral/50 border-tw-coral/30"
+                              : match.status === "Completed"
+                                ? "border-tw-teal/30 bg-tw-teal/5"
+                                : ""
                           }`}
                         >
                           <span className="text-xs font-mono text-slate-400 w-16">
@@ -3283,7 +3381,7 @@ function CategoryTournamentSection({
                           </span>
                           <div className="flex-1 font-medium">
                             {match.playerA}{" "}
-                            <span className="text-accent-teal">vs</span>{" "}
+                            <span className="text-tw-teal font-semibold">vs</span>{" "}
                             {match.playerB}
                           </div>
                           <div className="text-xs text-slate-500">
@@ -3299,13 +3397,36 @@ function CategoryTournamentSection({
                               />
                             ) : (
                               <div className="flex flex-col gap-1 items-start">
+                                {match.status !== "Scheduled" && (
                                 <span
                                   className={`px-2 py-0.5 rounded-full text-xs font-bold ${statusColors[match.status]}`}
                                 >
                                   {match.status}
                                 </span>
+                                )}
                                 {match.status === "Completed" && (
                                   <span className="text-xs text-slate-500">
+                                    {!match.winnerParticipantId &&
+                                    ((match.winnerScore == null &&
+                                      match.loserScore == null) ||
+                                      (match.winnerScore != null &&
+                                        match.loserScore != null &&
+                                        match.winnerScore ===
+                                          match.loserScore)) ? (
+                                      <>
+                                        Draw · 1 pt each
+                                        {scores.playerAScore != null &&
+                                        scores.playerBScore != null ? (
+                                          <>
+                                            {" "}
+                                            · {match.playerA}:{" "}
+                                            {scores.playerAScore} · {match.playerB}:{" "}
+                                            {scores.playerBScore}
+                                          </>
+                                        ) : null}
+                                      </>
+                                    ) : (
+                                      <>
                                     <PlayerLink
                                       name={match.playerA}
                                       employeeId={
@@ -3328,6 +3449,8 @@ function CategoryTournamentSection({
                                       className="text-xs"
                                     />
                                     : {scores.playerBScore ?? "—"}
+                                      </>
+                                    )}
                                   </span>
                                 )}
                               </div>
@@ -3338,6 +3461,7 @@ function CategoryTournamentSection({
                     })}
                   </div>
                 </div>
+                )}
               </div>
             </GlassCard>
           </motion.div>
@@ -3346,6 +3470,203 @@ function CategoryTournamentSection({
         {!isLoading && filteredGroups.length === 0 && (
           <p className="text-center text-slate-500 py-12">
             No groups or players match your search in this category.
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ─── Knockouts ───────────────────────────────────────────────────────────────
+
+function KnockoutsSection({
+  data,
+  adminMode,
+  knockoutState,
+  onKnockoutUpdate,
+  onKnockoutBoards,
+  onKnockoutPoints,
+  onKnockoutComplete,
+}: {
+  data: CategoryData[];
+  adminMode: boolean;
+  knockoutState: KnockoutStateMap;
+  onKnockoutUpdate: (matchId: string, patch: Partial<KnockoutMatchState>) => void;
+  onKnockoutBoards: (
+    match: ResolvedKnockoutMatch,
+    side: "A" | "B",
+    delta: number,
+  ) => void;
+  onKnockoutPoints: (
+    match: ResolvedKnockoutMatch,
+    side: "A" | "B",
+    delta: number,
+  ) => void;
+  onKnockoutComplete: (matchId: string, winnerSide: "A" | "B") => void;
+}) {
+  const [tab, setTab] = useState<"mens-singles" | "mens-doubles" | "womens">("mens-singles");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const knockoutTabs = adminMode
+    ? ([
+        { id: "mens-singles" as const, label: "Men's Singles" },
+        { id: "mens-doubles" as const, label: "Men's Doubles" },
+        { id: "womens" as const, label: "Women's Singles" },
+      ] as const)
+    : ([{ id: "mens-singles" as const, label: "Men's Singles" }] as const);
+
+  const activeTab = adminMode ? tab : "mens-singles";
+
+  useEffect(() => {
+    if (!adminMode && tab !== "mens-singles") {
+      setTab("mens-singles");
+    }
+  }, [adminMode, tab]);
+
+  const mensSinglesBracket = useMemo(
+    () => buildMensSinglesKnockout(data.find((c) => c.category === "Men's Singles")),
+    [data],
+  );
+  const mensDoublesBracket = useMemo(
+    () => buildMensDoublesKnockout(data.find((c) => c.category === "Men's Doubles")),
+    [data],
+  );
+  const womensBracket = useMemo(
+    () => buildWomensSinglesKnockout(data.find((c) => c.category === "Women's Singles")),
+    [data],
+  );
+
+  const mensSinglesResolved = useMemo(
+    () => resolveKnockoutBracket(mensSinglesBracket, knockoutState),
+    [mensSinglesBracket, knockoutState],
+  );
+  const mensDoublesResolved = useMemo(
+    () => resolveKnockoutBracket(mensDoublesBracket, knockoutState),
+    [mensDoublesBracket, knockoutState],
+  );
+  const womensResolved = useMemo(
+    () => resolveKnockoutBracket(womensBracket, knockoutState),
+    [womensBracket, knockoutState],
+  );
+
+  const bracket =
+    activeTab === "mens-singles"
+      ? mensSinglesBracket
+      : activeTab === "mens-doubles"
+        ? mensDoublesBracket
+        : womensBracket;
+  const resolved =
+    activeTab === "mens-singles"
+      ? mensSinglesResolved
+      : activeTab === "mens-doubles"
+        ? mensDoublesResolved
+        : womensResolved;
+
+  const selectedMatch = selectedId
+    ? resolved.find((m) => m.id === selectedId) ?? null
+    : null;
+
+  useEffect(() => {
+    setSelectedId(null);
+  }, [activeTab]);
+
+  return (
+    <section id="knockouts" className="py-20 board-pattern bg-gradient-to-b from-tw-mist/50 via-white to-tw-teal/5 dark:from-slate-900 dark:via-slate-900 dark:to-tw-purple/10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionHeader
+          title="Knockout Stage"
+          subtitle={
+            adminMode
+              ? "Click a match to open details · Quarterfinals → Semifinals → Championship"
+              : "Men's Singles · Quarterfinals → Semifinals → Championship"
+          }
+          icon={Award}
+        />
+
+        {adminMode && (
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
+            {knockoutTabs.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setTab(id)}
+                className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${
+                  activeTab === id
+                    ? "bg-gradient-to-r from-tw-purple to-tw-magenta text-white shadow-lg shadow-tw-magenta/25 scale-[1.02]"
+                    : "glass text-tw-purple dark:text-slate-300 hover:bg-tw-teal/10 hover:border-tw-teal/30"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {bracket.subtitle ? (
+          <p className="text-center text-sm text-tw-purple/60 dark:text-slate-400 mb-6">
+            {bracket.subtitle}
+          </p>
+        ) : null}
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35 }}
+          >
+            {activeTab === "mens-singles" ? (
+              <MensKnockoutFlowchart
+                matches={resolved}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+              />
+            ) : adminMode && activeTab === "mens-doubles" ? (
+              <MensDoublesKnockoutFlowchart
+                matches={resolved}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+              />
+            ) : adminMode ? (
+              <WomensKnockoutFlowchart
+                matches={resolved}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+              />
+            ) : null}
+          </motion.div>
+        </AnimatePresence>
+
+        <AnimatePresence mode="wait">
+          {selectedMatch && (
+            <KnockoutMatchModal
+              match={selectedMatch}
+              adminMode={adminMode}
+              onUpdate={(patch) => onKnockoutUpdate(selectedMatch.id, patch)}
+              onBoards={(side, delta) =>
+                onKnockoutBoards(selectedMatch, side, delta)
+              }
+              onPoints={(side, delta) =>
+                onKnockoutPoints(selectedMatch, side, delta)
+              }
+              onComplete={(side) => onKnockoutComplete(selectedMatch.id, side)}
+              onClose={() => setSelectedId(null)}
+              renderPlayer={(name, employeeId, className) => (
+                <PlayerLink
+                  name={name}
+                  employeeId={employeeId}
+                  className={className}
+                />
+              )}
+            />
+          )}
+        </AnimatePresence>
+
+        {!selectedMatch && (
+          <p className="text-center text-sm text-slate-400 mt-6">
+            Click any match card to open details
+            {adminMode ? ", update boards, and set the winner" : ""}
           </p>
         )}
       </div>
@@ -3445,7 +3766,7 @@ function Gallery({ adminMode }: { adminMode: boolean }) {
   };
 
   return (
-    <section id="gallery" className="py-20 bg-slate-50/50 dark:bg-slate-900/30">
+    <section id="gallery" className="py-20 bg-gradient-to-b from-tw-mist/30 via-white to-tw-teal/5 dark:from-slate-900 dark:via-slate-900 dark:to-tw-purple/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeader
           title="Tournament Gallery"
@@ -3730,10 +4051,140 @@ export default function App() {
     () => computeTournamentMatchProgress(displayTournament),
     [displayTournament],
   );
-  const liveMatches = useMemo(
-    () => collectLiveMatches(displayTournament),
+  const [knockoutState, setKnockoutState] = useState<KnockoutStateMap>(loadKnockoutState);
+
+  useEffect(() => {
+    saveKnockoutState(knockoutState);
+  }, [knockoutState]);
+
+  const mensKnockoutResolved = useMemo(() => {
+    const bracket = buildMensSinglesKnockout(
+      displayTournament.find((c) => c.category === "Men's Singles"),
+    );
+    return resolveKnockoutBracket(bracket, knockoutState);
+  }, [displayTournament, knockoutState]);
+
+  const mensDoublesKnockoutResolved = useMemo(() => {
+    const bracket = buildMensDoublesKnockout(
+      displayTournament.find((c) => c.category === "Men's Doubles"),
+    );
+    return resolveKnockoutBracket(bracket, knockoutState);
+  }, [displayTournament, knockoutState]);
+
+  const womensKnockoutResolved = useMemo(() => {
+    const bracket = buildWomensSinglesKnockout(
+      displayTournament.find((c) => c.category === "Women's Singles"),
+    );
+    return resolveKnockoutBracket(bracket, knockoutState);
+  }, [displayTournament, knockoutState]);
+
+  const liveKnockoutMatches = useMemo(() => {
+    const mensSinglesLive = collectLiveKnockoutMatches(
+      mensKnockoutResolved,
+      "Men's Singles",
+    );
+    if (!adminMode) return mensSinglesLive;
+    return [
+      ...mensSinglesLive,
+      ...collectLiveKnockoutMatches(mensDoublesKnockoutResolved, "Men's Doubles"),
+      ...collectLiveKnockoutMatches(womensKnockoutResolved, "Women's Singles"),
+    ];
+  }, [
+    adminMode,
+    mensKnockoutResolved,
+    mensDoublesKnockoutResolved,
+    womensKnockoutResolved,
+  ]);
+
+  const handleKnockoutUpdate = useCallback(
+    (matchId: string, patch: Partial<KnockoutMatchState>) => {
+      setKnockoutState((prev) => {
+        const allResolved = [
+          ...resolveKnockoutBracket(
+            buildMensSinglesKnockout(
+              displayTournament.find((c) => c.category === "Men's Singles"),
+            ),
+            prev,
+          ),
+          ...resolveKnockoutBracket(
+            buildMensDoublesKnockout(
+              displayTournament.find((c) => c.category === "Men's Doubles"),
+            ),
+            prev,
+          ),
+          ...resolveKnockoutBracket(
+            buildWomensSinglesKnockout(
+              displayTournament.find((c) => c.category === "Women's Singles"),
+            ),
+            prev,
+          ),
+        ];
+        const match = allResolved.find((m) => m.id === matchId);
+        if (!match) return prev;
+        const next = updateKnockoutMatch(prev, match, patch);
+        if (patch.status === "Live") {
+          requestAnimationFrame(() => {
+            document
+              .getElementById("live-matches")
+              ?.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }
+        return next;
+      });
+    },
     [displayTournament],
   );
+
+  const handleKnockoutBoards = useCallback(
+    (match: ResolvedKnockoutMatch, side: "A" | "B", delta: number) => {
+      setKnockoutState((prev) => adjustBoards(prev, match, side, delta));
+    },
+    [],
+  );
+
+  const handleKnockoutPoints = useCallback(
+    (match: ResolvedKnockoutMatch, side: "A" | "B", delta: number) => {
+      setKnockoutState((prev) => adjustPoints(prev, match, side, delta));
+    },
+    [],
+  );
+
+  const handleKnockoutComplete = useCallback(
+    (matchId: string, winnerSide: "A" | "B") => {
+      setKnockoutState((prev) => {
+        const allResolved = [
+          ...resolveKnockoutBracket(
+            buildMensSinglesKnockout(
+              displayTournament.find((c) => c.category === "Men's Singles"),
+            ),
+            prev,
+          ),
+          ...resolveKnockoutBracket(
+            buildMensDoublesKnockout(
+              displayTournament.find((c) => c.category === "Men's Doubles"),
+            ),
+            prev,
+          ),
+          ...resolveKnockoutBracket(
+            buildWomensSinglesKnockout(
+              displayTournament.find((c) => c.category === "Women's Singles"),
+            ),
+            prev,
+          ),
+        ];
+        const match = allResolved.find((m) => m.id === matchId);
+        if (!match) return prev;
+        return completeKnockoutMatch(prev, match, winnerSide);
+      });
+    },
+    [displayTournament],
+  );
+
+  const liveMatches = useMemo(() => {
+    const all = collectLiveMatches(displayTournament);
+    if (adminMode) return all;
+    return all.filter(({ category }) => !isAdminOnlyMatchCategory(category));
+  }, [displayTournament, adminMode]);
 
   const goToStandings = (category?: Category) => {
     if (category) setActiveCategory(category);
@@ -3798,6 +4249,11 @@ export default function App() {
       }
     } catch (e) {
       await loadTournament(true);
+      window.alert(
+        e instanceof Error
+          ? e.message
+          : "Could not save match result. Sign in as admin and try again.",
+      );
       throw e;
     }
   };
@@ -3820,6 +4276,15 @@ export default function App() {
         matchProgress={matchProgress.total}
       />
       <Categories onSelectCategory={goToStandings} />
+      <KnockoutsSection
+        data={displayTournament}
+        adminMode={adminMode}
+        knockoutState={knockoutState}
+        onKnockoutUpdate={handleKnockoutUpdate}
+        onKnockoutBoards={handleKnockoutBoards}
+        onKnockoutPoints={handleKnockoutPoints}
+        onKnockoutComplete={handleKnockoutComplete}
+      />
       <RulesSection />
       <Scoring />
 
@@ -3850,8 +4315,12 @@ export default function App() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <LiveMatchesBanner
           matches={liveMatches}
+          knockoutLive={liveKnockoutMatches}
           adminMode={adminMode}
           onMatchUpdate={handleMatchUpdate}
+          onKnockoutUpdate={handleKnockoutUpdate}
+          onKnockoutBoards={handleKnockoutBoards}
+          onKnockoutComplete={handleKnockoutComplete}
         />
       </div>
 

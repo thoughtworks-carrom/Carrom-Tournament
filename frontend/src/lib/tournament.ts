@@ -72,6 +72,23 @@ export function playerScoresForMatch(match: GroupMatch): {
   playerBScore: number | null;
 } {
   if (!match.winnerParticipantId) {
+    if (
+      (match.winnerScore == null && match.loserScore == null) ||
+      (match.winnerScore != null &&
+        match.loserScore != null &&
+        match.winnerScore === match.loserScore)
+    ) {
+      return {
+        playerAScore:
+          match.winnerScore != null && match.loserScore != null
+            ? match.winnerScore
+            : null,
+        playerBScore:
+          match.winnerScore != null && match.loserScore != null
+            ? match.loserScore
+            : null,
+      };
+    }
     return { playerAScore: null, playerBScore: null };
   }
   const winnerIsA = match.winnerParticipantId === match.participant1Id;

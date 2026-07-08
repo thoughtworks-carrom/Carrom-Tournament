@@ -21,8 +21,17 @@ export default {
           red: "#c41e3a",
         },
         accent: {
-          gold: "#d4a853",
-          teal: "#0d9488",
+          gold: "#a2186d",
+          teal: "#47cfbb",
+        },
+        tw: {
+          magenta: "#a2186d",
+          purple: "#471782",
+          violet: "#764f9e",
+          teal: "#47cfbb",
+          coral: "#e55237",
+          ink: "#231f20",
+          mist: "#f4f2f5",
         },
       },
       fontFamily: {
@@ -33,6 +42,8 @@ export default {
         float: "float 6s ease-in-out infinite",
         "float-delayed": "float 6s ease-in-out 2s infinite",
         shimmer: "shimmer 2s linear infinite",
+        "pulse-soft": "pulse-soft 2.5s ease-in-out infinite",
+        "glow-line": "glow-line 2s ease-in-out infinite",
       },
       keyframes: {
         float: {
@@ -42,6 +53,14 @@ export default {
         shimmer: {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
+        },
+        "pulse-soft": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
+        },
+        "glow-line": {
+          "0%, 100%": { opacity: "0.45" },
+          "50%": { opacity: "1" },
         },
       },
       backdropBlur: {

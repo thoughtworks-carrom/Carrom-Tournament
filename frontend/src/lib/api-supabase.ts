@@ -48,7 +48,7 @@ async function requireAdminSession() {
   } = await sb.auth.getSession();
   if (error) sbError(error);
   if (!session) {
-    throw new Error("Sign in as admin to upload or delete gallery photos");
+    throw new Error("Sign in as admin to update tournament data");
   }
   return sb;
 }
@@ -512,7 +512,7 @@ export const supabaseClient = {
   },
 
   resetMatch: async (matchId: string): Promise<ApiMatch> => {
-    const sb = requireSupabase();
+    const sb = await requireAdminSession();
     const { data: row, error } = await sb
       .from("matches")
       .update({
@@ -539,7 +539,7 @@ export const supabaseClient = {
       loser_score?: number;
     },
   ): Promise<ApiMatch> => {
-    const sb = requireSupabase();
+    const sb = await requireAdminSession();
     const payload: Record<string, unknown> = {};
     if (data.status !== undefined) payload.status = data.status;
     if (data.winner_participant_id !== undefined) {

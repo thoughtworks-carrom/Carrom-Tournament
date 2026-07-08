@@ -8,6 +8,7 @@ import type {
 } from "./types";
 
 const WIN_POINTS = 2;
+const DRAW_POINTS = 1;
 
 export function resolveParticipantName(
   participantId: string,
@@ -91,7 +92,24 @@ export function computeStandings(
       if (row) row.matches_played += 1;
     }
 
-    if (!winner) continue;
+    if (!winner) {
+      const isDraw =
+        match.winner_score == null && match.loser_score == null
+          ? true
+          : match.winner_score != null &&
+            match.loser_score != null &&
+            match.winner_score === match.loser_score;
+      if (isDraw) {
+        for (const pid of [p1, p2]) {
+          const row = stats.get(pid);
+          if (row) {
+            row.tournament_points += DRAW_POINTS;
+            if (match.winner_score != null) row.score += match.winner_score;
+          }
+        }
+      }
+      continue;
+    }
 
     const loser = winner === p1 ? p2 : p1;
     const winnerRow = stats.get(winner);
