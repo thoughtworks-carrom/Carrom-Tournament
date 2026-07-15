@@ -628,91 +628,68 @@ function mdR1NodeId(gA: string, gB: string, leg: 1 | 2) {
   return `md-r1-${gA.replace(/\s/g, "")}-${gB.replace(/\s/g, "")}-${leg}`;
 }
 
-/* ─── Women's IPL playoff (absolute layout + anchored connectors) ─── */
+/* ─── Women's IPL playoff (column layout + bracket connectors) ─── */
 
-const WS_COL_GAP = 88;
-const WS_ROW_GAP = 56;
-/** Header + card only — hints sit below and do not affect arrow math */
 const WS_BOX_H = HEADER_H + CARD_H;
+const WS_SLOT_H = WS_BOX_H + 40;
+/** Extra drop so Qualifier 2 header clears the Q1→Final bypass line */
+const WS_Q2_DROP = 24;
 
-type WsBoxPos = { left: number; top: number };
+function wsCardCenterY(blockTop: number) {
+  return blockTop + HEADER_H + CARD_H / 2;
+}
 
-function wsCardAnchor(pos: WsBoxPos) {
+function wsBracketLayout() {
+  const bracketH = WS_SLOT_H + WS_BOX_H;
+  const q1Top = 0;
+  const elimTop = WS_SLOT_H;
+  const yQ1 = wsCardCenterY(q1Top);
+  const yElim = wsCardCenterY(elimTop);
+  const yQ2 = (yQ1 + yElim) / 2 + WS_Q2_DROP;
+  const q2Top = yQ2 - (HEADER_H + CARD_H / 2);
+  /** Shared Y for Q1 winner bypass — straight horizontal into Final (upper slot) */
+  const yBypass = HEADER_H + 30;
+  const loserY = q1Top + HEADER_H + CARD_H - 22;
+  /** Q2 winner enters Final lower slot */
+  const yFinalQ2 = HEADER_H + CARD_H - 30;
+  const finalColLeft =
+    CARD_W + ROUND_GAP + CONNECTOR_W + ROUND_GAP + CARD_W + ROUND_GAP + CONNECTOR_W + ROUND_GAP;
+  const totalW = finalColLeft + CARD_W;
   return {
-    left: pos.left,
-    right: pos.left + CARD_W,
-    cy: pos.top + HEADER_H + CARD_H / 2,
-    top: pos.top,
+    bracketH,
+    yQ1,
+    yElim,
+    yQ2,
+    yBypass,
+    loserY,
+    yFinalQ2,
+    q2Top,
+    finalColLeft,
+    totalW,
   };
 }
 
-function wsArrowHead(x: number, y: number, dir: "right" | "left" = "right"): string {
-  if (dir === "right") return `M ${x - 7} ${y - 3.5} L ${x} ${y} L ${x - 7} ${y + 3.5}`;
-  return `M ${x + 7} ${y - 3.5} L ${x} ${y} L ${x + 7} ${y + 3.5}`;
-}
-
-function WomensPlayoffConnectors({
-  canvasW,
-  canvasH,
-  q1,
-  elim,
-  q2,
-  final,
-  q1Done,
-  elimDone,
-  q2Done,
+function WsSvgConnector({
+  width,
+  height,
+  paths,
+  theme,
 }: {
-  canvasW: number;
-  canvasH: number;
-  q1: WsBoxPos;
-  elim: WsBoxPos;
-  q2: WsBoxPos;
-  final: WsBoxPos;
-  q1Done: boolean;
-  elimDone: boolean;
-  q2Done: boolean;
+  width: number;
+  height: number;
+  paths: { d: string; done: boolean }[];
+  theme: RoundTheme;
 }) {
-  const aQ1 = wsCardAnchor(q1);
-  const aElim = wsCardAnchor(elim);
-  const aQ2 = wsCardAnchor(q2);
-  const aFinal = wsCardAnchor(final);
-
-  const mergeX = aQ1.right + WS_COL_GAP * 0.4;
-  const bypassY = aQ1.top - 14;
-  const approachX = aFinal.left - 14;
-
-  const paths: { d: string; done: boolean }[] = [
-    // Q1 loser → Q2
-    {
-      d: `M ${aQ1.right} ${aQ1.cy} H ${mergeX} V ${aQ2.cy} H ${aQ2.left}`,
-      done: q1Done,
-    },
-    // Elim winner → Q2
-    {
-      d: `M ${aElim.right} ${aElim.cy} H ${mergeX} V ${aQ2.cy}`,
-      done: elimDone,
-    },
-    // Q1 winner bypass (top rail) → Final
-    {
-      d: `M ${aQ1.right} ${aQ1.cy} H ${mergeX} V ${bypassY} H ${approachX} V ${aFinal.cy} H ${aFinal.left}`,
-      done: q1Done,
-    },
-    // Q2 winner → Final
-    { d: `M ${aQ2.right} ${aQ2.cy} H ${aFinal.left}`, done: q2Done },
-    { d: wsArrowHead(aQ2.left, aQ2.cy), done: q1Done || elimDone },
-    { d: wsArrowHead(aFinal.left, aFinal.cy), done: q1Done || q2Done },
-  ];
-
   return (
     <svg
-      className="absolute left-0 top-0 pointer-events-none z-[1]"
-      width={canvasW}
-      height={canvasH}
-      viewBox={`0 0 ${canvasW} ${canvasH}`}
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      className="shrink-0"
       aria-hidden
     >
       <defs>
-        <linearGradient id="ws-connector-active" x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id="ws-conn-active" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="#47cfbb" />
           <stop offset="100%" stopColor="#a2186d" />
         </linearGradient>
@@ -722,64 +699,138 @@ function WomensPlayoffConnectors({
           key={i}
           d={p.d}
           fill="none"
-          stroke={p.done ? "url(#ws-connector-active)" : undefined}
-          className={p.done ? undefined : PLAYOFF_THEME.connector}
+          className={p.done ? undefined : theme.connector}
+          stroke={p.done ? "url(#ws-conn-active)" : undefined}
           strokeWidth={p.done ? 2.25 : 1.75}
           strokeLinecap="round"
           strokeLinejoin="round"
+          style={p.done ? { filter: "drop-shadow(0 0 3px rgba(71,207,187,0.4))" } : undefined}
         />
       ))}
     </svg>
   );
 }
 
-function WomensAbsMatch({
-  pos,
-  label,
-  theme,
-  highlight,
-  hint,
-  formatHint,
-  children,
+function WsMergeConnector({
+  yLoser,
+  yElim,
+  yQ2,
+  height,
+  q1Done,
+  elimDone,
 }: {
-  pos: WsBoxPos;
-  label: string;
-  theme: RoundTheme;
-  highlight?: boolean;
-  hint?: string;
-  formatHint?: string;
-  children: ReactNode;
+  yLoser: number;
+  yElim: number;
+  yQ2: number;
+  height: number;
+  q1Done: boolean;
+  elimDone: boolean;
 }) {
+  const forkX = CONNECTOR_W * 0.42;
+  const endX = CONNECTOR_W - 4;
+  const mergeDone = q1Done || elimDone;
+  const paths = [
+    { d: `M 0 ${yLoser} H ${forkX}`, done: q1Done },
+    { d: `M 0 ${yElim} H ${forkX}`, done: elimDone },
+    { d: `M ${forkX} ${yLoser} V ${yElim}`, done: mergeDone },
+    {
+      d: `M ${forkX} ${yQ2} H ${endX - 5} M ${endX - 10} ${yQ2 - 3.5} L ${endX} ${yQ2} L ${endX - 10} ${yQ2 + 3.5}`,
+      done: mergeDone,
+    },
+  ];
+  return <WsSvgConnector width={CONNECTOR_W} height={height} paths={paths} theme={PLAYOFF_THEME} />;
+}
+
+function WsToFinalConnector({
+  yQ2,
+  yFinalEntry,
+  height,
+  q2Done,
+}: {
+  yQ2: number;
+  yFinalEntry: number;
+  height: number;
+  q2Done: boolean;
+}) {
+  const forkX = CONNECTOR_W * 0.38;
+  const endX = CONNECTOR_W - 4;
+  const paths = [
+    { d: `M 0 ${yQ2} H ${forkX} V ${yFinalEntry}`, done: q2Done },
+    {
+      d: `M ${forkX} ${yFinalEntry} H ${endX - 5} M ${endX - 10} ${yFinalEntry - 3.5} L ${endX} ${yFinalEntry} L ${endX - 10} ${yFinalEntry + 3.5}`,
+      done: q2Done,
+    },
+  ];
+  return <WsSvgConnector width={CONNECTOR_W} height={height} paths={paths} theme={PLAYOFF_THEME} />;
+}
+
+function WsBypassRail({
+  fromX,
+  toX,
+  y,
+  height,
+  done,
+}: {
+  fromX: number;
+  toX: number;
+  y: number;
+  height: number;
+  done: boolean;
+}) {
+  const endX = toX - 4;
   return (
-    <div className="absolute z-[2]" style={{ left: pos.left, top: pos.top, width: CARD_W }}>
-      <RoundHeader label={label} theme={theme} highlight={highlight} formatHint={formatHint} />
-      {children}
-      {hint && (
-        <p className="text-[9px] text-center text-slate-400 mt-1.5 leading-snug px-1 max-w-[252px]">
-          {hint}
-        </p>
-      )}
-    </div>
+    <svg
+      className="absolute top-0 left-0 pointer-events-none z-[1]"
+      width={toX + 8}
+      height={height}
+      aria-hidden
+    >
+      <defs>
+        <linearGradient id="ws-bypass-active" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#47cfbb" />
+          <stop offset="100%" stopColor="#d4a853" />
+        </linearGradient>
+      </defs>
+      <path
+        d={`M ${fromX} ${y} H ${endX - 5} M ${endX - 10} ${y - 3.5} L ${endX} ${y} L ${endX - 10} ${y + 3.5}`}
+        fill="none"
+        className={done ? undefined : PLAYOFF_THEME.connector}
+        stroke={done ? "url(#ws-bypass-active)" : undefined}
+        strokeWidth={done ? 2.25 : 1.75}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={done ? { filter: "drop-shadow(0 0 4px rgba(212,168,83,0.45))" } : undefined}
+      />
+    </svg>
   );
 }
 
-function buildWomensLayout() {
-  const TOP_PAD = 28;
-  const canvasW = CARD_W * 3 + WS_COL_GAP * 2;
-  const canvasH = WS_BOX_H * 2 + WS_ROW_GAP + TOP_PAD;
-  const col1 = CARD_W + WS_COL_GAP;
-  const col2 = 2 * (CARD_W + WS_COL_GAP);
-  const q2Top = TOP_PAD + (canvasH - TOP_PAD - WS_BOX_H) / 2;
-
-  return {
-    canvasW,
-    canvasH,
-    outerH: canvasH + 22,
-    q1: { left: 0, top: TOP_PAD } satisfies WsBoxPos,
-    elim: { left: 0, top: TOP_PAD + WS_BOX_H + WS_ROW_GAP } satisfies WsBoxPos,
-    q2: { left: col1, top: q2Top } satisfies WsBoxPos,
-    final: { left: col2, top: q2Top } satisfies WsBoxPos,
-  };
+function WsStackedMatch({
+  top,
+  label,
+  hint,
+  formatHint,
+  theme,
+  highlight,
+  children,
+}: {
+  top: number;
+  label: string;
+  hint?: string;
+  formatHint?: string;
+  theme: RoundTheme;
+  highlight?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div className="absolute left-0 w-full" style={{ top, width: CARD_W }}>
+      <RoundHeader label={label} theme={theme} highlight={highlight} formatHint={formatHint} />
+      {children}
+      {hint && (
+        <p className="text-[9px] text-center text-slate-400 mt-1.5 leading-snug px-1">{hint}</p>
+      )}
+    </div>
+  );
 }
 
 function WomensMatchSlot({
@@ -874,75 +925,86 @@ export function WomensKnockoutFlowchart({
   const elimDone = byId.get("ws-elim")?.state.status === "Completed";
   const q2Done = byId.get("ws-q2")?.state.status === "Completed";
 
-  const layout = useMemo(() => buildWomensLayout(), []);
+  const layout = useMemo(() => wsBracketLayout(), []);
 
   return (
     <BracketShell>
-      {/* Desktop — absolute positions so arrows lock to card centers */}
+      {/* Desktop / tablet — column bracket (scales via BracketShell) */}
       <div
-        className="hidden lg:block mx-auto relative"
-        style={{ width: layout.canvasW, height: layout.outerH }}
+        className="hidden md:block relative mx-auto"
+        style={{ width: layout.totalW, minHeight: layout.bracketH + 28 }}
       >
-        <WomensPlayoffConnectors
-          canvasW={layout.canvasW}
-          canvasH={layout.canvasH}
-          q1={layout.q1}
-          elim={layout.elim}
-          q2={layout.q2}
-          final={layout.final}
-          q1Done={!!q1Done}
-          elimDone={!!elimDone}
-          q2Done={!!q2Done}
+        <WsBypassRail
+          fromX={CARD_W}
+          toX={layout.finalColLeft}
+          y={layout.yBypass}
+          height={layout.bracketH}
+          done={!!q1Done}
         />
 
-        <WomensAbsMatch
-          pos={layout.q1}
-          label="Qualifier 1"
-          hint="Winner → Final"
-          formatHint={matchFormat("ws-q1")}
-          theme={PLAYOFF_THEME}
-        >
-          {chip("ws-q1")}
-        </WomensAbsMatch>
+        <div className="relative z-[2] flex items-start" style={{ gap: ROUND_GAP }}>
+          <div className="relative shrink-0" style={{ width: CARD_W, height: layout.bracketH }}>
+            <WsStackedMatch
+              top={0}
+              label="Qualifier 1"
+              hint="Winner → Final"
+              formatHint={matchFormat("ws-q1")}
+              theme={PLAYOFF_THEME}
+            >
+              {chip("ws-q1")}
+            </WsStackedMatch>
+            <WsStackedMatch
+              top={WS_SLOT_H}
+              label="Eliminator"
+              hint="3rd vs 4th"
+              formatHint={matchFormat("ws-elim")}
+              theme={PLAYOFF_THEME}
+            >
+              {chip("ws-elim")}
+            </WsStackedMatch>
+          </div>
 
-        <WomensAbsMatch
-          pos={layout.elim}
-          label="Eliminator"
-          hint="3rd vs 4th"
-          formatHint={matchFormat("ws-elim")}
-          theme={PLAYOFF_THEME}
-        >
-          {chip("ws-elim")}
-        </WomensAbsMatch>
+          <WsMergeConnector
+            yLoser={layout.loserY}
+            yElim={layout.yElim}
+            yQ2={layout.yQ2}
+            height={layout.bracketH}
+            q1Done={!!q1Done}
+            elimDone={!!elimDone}
+          />
 
-        <WomensAbsMatch
-          pos={layout.q2}
-          label="Qualifier 2"
-          hint="Q1 loser vs Elim winner"
-          formatHint={matchFormat("ws-q2")}
-          theme={PLAYOFF_THEME}
-        >
-          {chip("ws-q2")}
-        </WomensAbsMatch>
+          <div className="relative shrink-0" style={{ width: CARD_W, height: layout.bracketH }}>
+            <WsStackedMatch
+              top={layout.q2Top}
+              label="Qualifier 2"
+              hint="Q1 loser vs Elim winner"
+              formatHint={matchFormat("ws-q2")}
+              theme={PLAYOFF_THEME}
+            >
+              {chip("ws-q2")}
+            </WsStackedMatch>
+          </div>
 
-        <WomensAbsMatch
-          pos={layout.final}
-          label="Championship"
-          hint="Q1 winner vs Q2 winner"
-          formatHint={matchFormat("ws-final")}
-          theme={ROUND_THEMES[3]}
-          highlight
-        >
-          {chip("ws-final")}
-        </WomensAbsMatch>
-      </div>
+          <WsToFinalConnector
+            yQ2={layout.yQ2}
+            yFinalEntry={layout.yFinalQ2}
+            height={layout.bracketH}
+            q2Done={!!q2Done}
+          />
 
-      {/* Tablet: scale to fit */}
-      <div className="hidden md:flex lg:hidden items-center justify-center gap-4 pb-2">
-        <WomensMatchSlot label="Qualifier 1" theme={PLAYOFF_THEME}>{chip("ws-q1")}</WomensMatchSlot>
-        <WomensMatchSlot label="Eliminator" theme={PLAYOFF_THEME}>{chip("ws-elim")}</WomensMatchSlot>
-        <WomensMatchSlot label="Qualifier 2" theme={PLAYOFF_THEME}>{chip("ws-q2")}</WomensMatchSlot>
-        <WomensMatchSlot label="Championship" theme={ROUND_THEMES[3]} highlight>{chip("ws-final")}</WomensMatchSlot>
+          <div className="relative shrink-0" style={{ width: CARD_W, height: layout.bracketH }}>
+            <WsStackedMatch
+              top={0}
+              label="Championship"
+              hint="Q1 winner vs Q2 winner"
+              formatHint={matchFormat("ws-final")}
+              theme={ROUND_THEMES[3]}
+              highlight
+            >
+              {chip("ws-final")}
+            </WsStackedMatch>
+          </div>
+        </div>
       </div>
 
       {/* Mobile: vertical flow */}
