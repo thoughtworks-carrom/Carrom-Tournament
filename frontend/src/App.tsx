@@ -3517,12 +3517,16 @@ function KnockoutsSection({
         { id: "mens-doubles" as const, label: "Men's Doubles" },
         { id: "womens" as const, label: "Women's Singles" },
       ] as const)
-    : ([{ id: "mens-singles" as const, label: "Men's Singles" }] as const);
+    : ([
+        { id: "mens-singles" as const, label: "Men's Singles" },
+        { id: "womens" as const, label: "Women's Singles" },
+      ] as const);
 
-  const activeTab = adminMode ? tab : "mens-singles";
+  const activeTab =
+    adminMode || tab !== "mens-doubles" ? tab : "mens-singles";
 
   useEffect(() => {
-    if (!adminMode && tab !== "mens-singles") {
+    if (!adminMode && tab === "mens-doubles") {
       setTab("mens-singles");
     }
   }, [adminMode, tab]);
@@ -3582,12 +3586,12 @@ function KnockoutsSection({
           subtitle={
             adminMode
               ? "Click a match to open details · Quarterfinals → Semifinals → Championship"
-              : "Men's Singles · Quarterfinals → Semifinals → Championship"
+              : "Men's Singles & Women's Singles · tap a match for details"
           }
           icon={Award}
         />
 
-        {adminMode && (
+        {knockoutTabs.length > 1 && (
           <div className="flex flex-wrap justify-center gap-3 mb-8">
             {knockoutTabs.map(({ id, label }) => (
               <button
@@ -3626,19 +3630,19 @@ function KnockoutsSection({
                 selectedId={selectedId}
                 onSelect={setSelectedId}
               />
-            ) : adminMode && activeTab === "mens-doubles" ? (
+            ) : activeTab === "mens-doubles" ? (
               <MensDoublesKnockoutFlowchart
                 matches={resolved}
                 selectedId={selectedId}
                 onSelect={setSelectedId}
               />
-            ) : adminMode ? (
+            ) : (
               <WomensKnockoutFlowchart
                 matches={resolved}
                 selectedId={selectedId}
                 onSelect={setSelectedId}
               />
-            ) : null}
+            )}
           </motion.div>
         </AnimatePresence>
 
@@ -4170,7 +4174,12 @@ export default function App() {
       mensKnockoutResolved,
       "Men's Singles",
     );
-    if (!adminMode) return mensSinglesLive;
+    if (!adminMode) {
+      return [
+        ...mensSinglesLive,
+        ...collectLiveKnockoutMatches(womensKnockoutResolved, "Women's Singles"),
+      ];
+    }
     return [
       ...mensSinglesLive,
       ...collectLiveKnockoutMatches(mensDoublesKnockoutResolved, "Men's Doubles"),
