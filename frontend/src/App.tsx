@@ -3511,25 +3511,13 @@ function KnockoutsSection({
   const [tab, setTab] = useState<"mens-singles" | "mens-doubles" | "womens">("mens-singles");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const knockoutTabs = adminMode
-    ? ([
-        { id: "mens-singles" as const, label: "Men's Singles" },
-        { id: "mens-doubles" as const, label: "Men's Doubles" },
-        { id: "womens" as const, label: "Women's Singles" },
-      ] as const)
-    : ([
-        { id: "mens-singles" as const, label: "Men's Singles" },
-        { id: "womens" as const, label: "Women's Singles" },
-      ] as const);
+  const knockoutTabs = [
+    { id: "mens-singles" as const, label: "Men's Singles" },
+    { id: "mens-doubles" as const, label: "Men's Doubles" },
+    { id: "womens" as const, label: "Women's Singles" },
+  ] as const;
 
-  const activeTab =
-    adminMode || tab !== "mens-doubles" ? tab : "mens-singles";
-
-  useEffect(() => {
-    if (!adminMode && tab === "mens-doubles") {
-      setTab("mens-singles");
-    }
-  }, [adminMode, tab]);
+  const activeTab = tab;
 
   const mensSinglesBracket = useMemo(
     () => buildMensSinglesKnockout(data.find((c) => c.category === "Men's Singles")),
@@ -3586,7 +3574,7 @@ function KnockoutsSection({
           subtitle={
             adminMode
               ? "Click a match to open details · Quarterfinals → Semifinals → Championship"
-              : "Men's Singles & Women's Singles · tap a match for details"
+              : "Men's Singles, Men's Doubles & Women's Singles · tap a match for details"
           }
           icon={Award}
         />
@@ -4174,19 +4162,12 @@ export default function App() {
       mensKnockoutResolved,
       "Men's Singles",
     );
-    if (!adminMode) {
-      return [
-        ...mensSinglesLive,
-        ...collectLiveKnockoutMatches(womensKnockoutResolved, "Women's Singles"),
-      ];
-    }
     return [
       ...mensSinglesLive,
       ...collectLiveKnockoutMatches(mensDoublesKnockoutResolved, "Men's Doubles"),
       ...collectLiveKnockoutMatches(womensKnockoutResolved, "Women's Singles"),
     ];
   }, [
-    adminMode,
     mensKnockoutResolved,
     mensDoublesKnockoutResolved,
     womensKnockoutResolved,
