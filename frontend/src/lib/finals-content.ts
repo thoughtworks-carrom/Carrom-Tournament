@@ -56,18 +56,19 @@ export const FINALS_PHOTOS: Record<FinalsPhotoSection, FinalsPhoto[]> = {
     peoplePhotoEntry("organisers", "Gopichand.png"),
     peoplePhotoEntry("organisers", "Sai Mohan Reddy.png"),
     peoplePhotoEntry("organisers", "sharan reddi.png"),
+    peoplePhotoEntry("organisers", "mani kumar reddy .png"),
     peoplePhotoEntry("organisers", "Lochan.jpg"),
   ],
   volunteers: [
     peoplePhotoEntry("volunteers", "suresh.png"),
     peoplePhotoEntry("volunteers", "Praneeth.png"),
+    peoplePhotoEntry("volunteers", "Yamuna.png"),
     peoplePhotoEntry("volunteers", "Bharath.jpeg"),
     peoplePhotoEntry("volunteers", "chaitanya.png"),
     peoplePhotoEntry("volunteers", "chakravarthi.png"),
     peoplePhotoEntry("volunteers", "Dinesh.png"),
     peoplePhotoEntry("volunteers", "narendra.png"),
     peoplePhotoEntry("volunteers", "Raghavendra.png"),
-    peoplePhotoEntry("volunteers", "Rohini.png"),
   ],
 };
 

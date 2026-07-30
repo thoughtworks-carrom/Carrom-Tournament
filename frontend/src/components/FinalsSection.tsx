@@ -87,7 +87,13 @@ function SectionBlock({
   );
 }
 
-function PeoplePhotoGrid({ photos }: { photos: FinalsPhoto[] }) {
+function PeoplePhotoGrid({
+  photos,
+  layout = "grid",
+}: {
+  photos: FinalsPhoto[];
+  layout?: "grid" | "row";
+}) {
   if (photos.length === 0) {
     return (
       <p className="text-center text-slate-500 dark:text-slate-400 py-8 rounded-2xl border border-dashed border-tw-purple/20 dark:border-tw-teal/20">
@@ -97,12 +103,22 @@ function PeoplePhotoGrid({ photos }: { photos: FinalsPhoto[] }) {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+    <div
+      className={
+        layout === "row"
+          ? "flex flex-nowrap justify-center gap-5 md:gap-6 lg:gap-8 max-w-7xl mx-auto overflow-x-auto pb-1"
+          : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6"
+      }
+    >
       {photos.map((photo) => (
         <motion.div
           key={photo.file}
           whileHover={{ scale: 1.02 }}
-          className="flex flex-col items-center text-center"
+          className={
+            layout === "row"
+              ? "flex flex-col items-center text-center shrink-0 w-36 sm:w-40 md:w-44 lg:w-[11.5rem]"
+              : "flex flex-col items-center text-center"
+          }
         >
           <div className="w-full aspect-square rounded-2xl overflow-hidden glass bg-white/60 dark:bg-slate-800/60 flex items-center justify-center p-3">
             <img
@@ -112,7 +128,13 @@ function PeoplePhotoGrid({ photos }: { photos: FinalsPhoto[] }) {
             />
           </div>
           {photo.title ? (
-            <p className="mt-3 text-sm font-semibold text-tw-ink dark:text-white leading-snug">
+            <p
+              className={
+                layout === "row"
+                  ? "mt-3 text-sm md:text-base font-semibold text-tw-ink dark:text-white leading-snug"
+                  : "mt-3 text-sm font-semibold text-tw-ink dark:text-white leading-snug"
+              }
+            >
               {photo.title}
             </p>
           ) : null}
@@ -684,7 +706,7 @@ export function FinalsSection({
           title="Organisers"
           subtitle="The team behind Thoughtworks Hyderabad Carrom Championship 2026"
         >
-          <PeoplePhotoGrid photos={FINALS_PHOTOS.organisers} />
+          <PeoplePhotoGrid photos={FINALS_PHOTOS.organisers} layout="row" />
         </SectionBlock>
 
         <SectionBlock
