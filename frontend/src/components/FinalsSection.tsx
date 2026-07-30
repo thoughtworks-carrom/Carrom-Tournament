@@ -244,6 +244,118 @@ function PublicFinalScoreView({
   return <div className="glass rounded-2xl p-6 md:p-8 mb-6">{content}</div>;
 }
 
+function YouTubeLiveAdminPanel({
+  youtubeInput,
+  onYoutubeInputChange,
+  onSave,
+  onClear,
+  busy,
+  hasSavedUrl,
+}: {
+  youtubeInput: string;
+  onYoutubeInputChange: (url: string) => void;
+  onSave: () => void;
+  onClear: () => void;
+  busy: boolean;
+  hasSavedUrl: boolean;
+}) {
+  return (
+    <div className="glass rounded-2xl p-5 mb-6 space-y-4 border border-tw-coral/20 max-w-4xl mx-auto">
+      <label className="font-display font-bold text-tw-ink dark:text-white flex items-center gap-2">
+        <Youtube className="w-5 h-5 text-red-500" />
+        YouTube live link (admin only)
+      </label>
+      <input
+        type="url"
+        value={youtubeInput}
+        onChange={(e) => onYoutubeInputChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") onSave();
+        }}
+        placeholder="https://www.youtube.com/watch?v=..."
+        className="w-full px-4 py-3 rounded-xl border border-tw-purple/20 dark:border-tw-teal/20 bg-white/80 dark:bg-slate-800/80 text-sm"
+        disabled={busy}
+      />
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={busy || !youtubeInput.trim()}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-sm disabled:opacity-50"
+        >
+          Save for all viewers
+        </button>
+        {hasSavedUrl ? (
+          <button
+            type="button"
+            onClick={onClear}
+            disabled={busy}
+            className="px-5 py-2.5 rounded-xl bg-slate-600 hover:bg-slate-500 text-white font-semibold text-sm disabled:opacity-50"
+          >
+            Remove
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function YouTubeLiveViewer({ youtubeUrl }: { youtubeUrl: string }) {
+  const url = youtubeUrl.trim();
+  const embed = youtubeEmbedUrl(url);
+
+  if (!embed) {
+    return (
+      <div className="text-center glass rounded-2xl p-8 max-w-xl mx-auto">
+        <p className="text-sm text-slate-500 mb-4">
+          Could not embed this link. Use a watch URL like{" "}
+          <code className="text-xs">youtube.com/watch?v=...</code>
+        </p>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold"
+        >
+          <Youtube className="w-5 h-5" />
+          Open on YouTube
+          <ExternalLink className="w-4 h-4" />
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl overflow-hidden glass shadow-xl max-w-4xl mx-auto">
+      <div className="aspect-video w-full bg-black">
+        <iframe
+          src={`${embed}?autoplay=1&rel=0&modestbranding=1`}
+          title="YouTube live stream"
+          className="w-full h-full border-0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-t border-white/10 dark:border-slate-700/50">
+        <span className="inline-flex items-center gap-2 text-sm font-bold text-red-500 uppercase tracking-wide">
+          <Radio className="w-4 h-4 animate-pulse" />
+          Live
+        </span>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-sm transition-colors"
+        >
+          <Youtube className="w-4 h-4" />
+          Open on YouTube
+          <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+        </a>
+      </div>
+    </div>
+  );
+}
+
 function YouTubeLiveBlock({
   youtubeUrl,
   adminMode,
@@ -262,7 +374,6 @@ function YouTubeLiveBlock({
   busy: boolean;
 }) {
   const url = youtubeUrl?.trim() ?? "";
-  const embed = url ? youtubeEmbedUrl(url) : null;
 
   return (
     <SectionBlock
@@ -275,94 +386,22 @@ function YouTubeLiveBlock({
       }
     >
       {adminMode ? (
-        <div className="glass rounded-2xl p-5 mb-6 space-y-4 border border-tw-coral/20 max-w-4xl mx-auto">
-          <label className="font-display font-bold text-tw-ink dark:text-white flex items-center gap-2">
-            <Youtube className="w-5 h-5 text-red-500" />
-            YouTube live link
-          </label>
-          <input
-            type="url"
-            value={youtubeInput}
-            onChange={(e) => onYoutubeInputChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") onSave();
-            }}
-            placeholder="https://www.youtube.com/watch?v=..."
-            className="w-full px-4 py-3 rounded-xl border border-tw-purple/20 dark:border-tw-teal/20 bg-white/80 dark:bg-slate-800/80 text-sm"
-            disabled={busy}
-          />
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={onSave}
-              disabled={busy || !youtubeInput.trim()}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-sm disabled:opacity-50"
-            >
-              Save
-            </button>
-            {url ? (
-              <button
-                type="button"
-                onClick={onClear}
-                disabled={busy}
-                className="px-5 py-2.5 rounded-xl bg-slate-600 hover:bg-slate-500 text-white font-semibold text-sm disabled:opacity-50"
-              >
-                Remove
-              </button>
-            ) : null}
-          </div>
-        </div>
+        <YouTubeLiveAdminPanel
+          youtubeInput={youtubeInput}
+          onYoutubeInputChange={onYoutubeInputChange}
+          onSave={onSave}
+          onClear={onClear}
+          busy={busy}
+          hasSavedUrl={Boolean(url)}
+        />
       ) : null}
 
       {!url ? (
         <p className="text-center text-slate-500 dark:text-slate-400 py-8 rounded-2xl border border-dashed border-tw-purple/20 dark:border-tw-teal/20 max-w-4xl mx-auto">
           No live stream yet.
         </p>
-      ) : embed ? (
-        <div className="rounded-2xl overflow-hidden glass shadow-xl max-w-4xl mx-auto">
-          <div className="aspect-video w-full bg-black">
-            <iframe
-              src={`${embed}?autoplay=1&rel=0&modestbranding=1`}
-              title="YouTube live stream"
-              className="w-full h-full border-0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            />
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-t border-white/10 dark:border-slate-700/50">
-            <span className="inline-flex items-center gap-2 text-sm font-bold text-red-500 uppercase tracking-wide">
-              <Radio className="w-4 h-4 animate-pulse" />
-              Live
-            </span>
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-sm transition-colors"
-            >
-              <Youtube className="w-4 h-4" />
-              Open on YouTube
-              <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-            </a>
-          </div>
-        </div>
       ) : (
-        <div className="text-center glass rounded-2xl p-8 max-w-xl mx-auto">
-          <p className="text-sm text-slate-500 mb-4">
-            Could not embed this link. Use a watch URL like{" "}
-            <code className="text-xs">youtube.com/watch?v=...</code>
-          </p>
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold"
-          >
-            <Youtube className="w-5 h-5" />
-            Open on YouTube
-            <ExternalLink className="w-4 h-4" />
-          </a>
-        </div>
+        <YouTubeLiveViewer youtubeUrl={url} />
       )}
     </SectionBlock>
   );
@@ -395,22 +434,15 @@ export function FinalsSection({
   const [busy, setBusy] = useState(false);
 
   const loadSettings = useCallback(async () => {
-    const local = loadFinalsSettings();
-    if (local.youtube_url) {
-      setSettings(local);
-      setYoutubeInput(local.youtube_url);
-    }
-
     try {
       const remote = await api.getFinalsSettings();
-      if (remote.youtube_url) {
-        setSettings(remote);
-        setYoutubeInput(remote.youtube_url);
-        saveFinalsSettings(remote);
-      } else if (!local.youtube_url) {
-        setSettings(remote);
-      }
+      setSettings(remote);
+      setYoutubeInput(remote.youtube_url ?? "");
+      saveFinalsSettings(remote);
     } catch (e) {
+      const local = loadFinalsSettings();
+      setSettings(local);
+      setYoutubeInput(local.youtube_url ?? "");
       console.error("Could not load finals YouTube settings:", e);
     }
   }, []);
@@ -562,24 +594,31 @@ export function FinalsSection({
             <p className="text-slate-500 dark:text-slate-400 text-center py-6">
               Final match details will appear once players are confirmed.
             </p>
-          ) : adminMode ? (
-            <div className="glass rounded-2xl p-6 md:p-8 mb-6">
-              <KnockoutMatchDetailPanel
-                match={activeMatch}
-                adminMode
-                onUpdate={(patch) => onKnockoutUpdate(activeMatch.id, patch)}
-                onBoards={(side, delta) => onKnockoutBoards(activeMatch, side, delta)}
-                onPoints={(side, delta) => onKnockoutPoints(activeMatch, side, delta)}
-                onComplete={(side) => onKnockoutComplete(activeMatch.id, side)}
-              />
-            </div>
           ) : (
-            <PublicFinalScoreView
-              match={activeMatch}
-              section={activeConfig.section}
-              onGoToLive={scrollToLiveSection}
-              isOnYoutubeLive={Boolean(savedYoutubeUrl)}
-            />
+            <>
+              <PublicFinalScoreView
+                match={activeMatch}
+                section={activeConfig.section}
+                onGoToLive={scrollToLiveSection}
+                isOnYoutubeLive={Boolean(savedYoutubeUrl)}
+              />
+
+              {adminMode ? (
+                <div className="glass rounded-2xl p-6 md:p-8 mt-6 border border-tw-coral/20">
+                  <p className="text-xs font-bold uppercase tracking-wider text-tw-coral mb-4">
+                    Admin — edit final scores
+                  </p>
+                  <KnockoutMatchDetailPanel
+                    match={activeMatch}
+                    adminMode
+                    onUpdate={(patch) => onKnockoutUpdate(activeMatch.id, patch)}
+                    onBoards={(side, delta) => onKnockoutBoards(activeMatch, side, delta)}
+                    onPoints={(side, delta) => onKnockoutPoints(activeMatch, side, delta)}
+                    onComplete={(side) => onKnockoutComplete(activeMatch.id, side)}
+                  />
+                </div>
+              ) : null}
+            </>
           )}
 
         </SectionBlock>

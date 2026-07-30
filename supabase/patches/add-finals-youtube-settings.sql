@@ -19,7 +19,13 @@ CREATE POLICY "public_read_finals_settings"
   ON finals_settings FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "admin_write_finals_settings" ON finals_settings;
-CREATE POLICY "admin_write_finals_settings"
-  ON finals_settings FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS "admin_update_finals_settings" ON finals_settings;
+DROP POLICY IF EXISTS "admin_delete_finals_settings" ON finals_settings;
+CREATE POLICY "admin_insert_finals_settings"
+  ON finals_settings FOR INSERT WITH CHECK (is_admin());
+CREATE POLICY "admin_update_finals_settings"
+  ON finals_settings FOR UPDATE USING (is_admin()) WITH CHECK (is_admin());
+CREATE POLICY "admin_delete_finals_settings"
+  ON finals_settings FOR DELETE USING (is_admin());
 
 ALTER PUBLICATION supabase_realtime ADD TABLE finals_settings;

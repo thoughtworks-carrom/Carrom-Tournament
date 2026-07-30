@@ -124,6 +124,17 @@ CREATE TABLE IF NOT EXISTS gallery_images (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS finals_settings (
+  id int PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  youtube_url text,
+  live_match_id text,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+INSERT INTO finals_settings (id, youtube_url, live_match_id)
+VALUES (1, NULL, NULL)
+ON CONFLICT (id) DO NOTHING;
+
 CREATE INDEX IF NOT EXISTS idx_groups_category ON groups(category_id);
 CREATE INDEX IF NOT EXISTS idx_matches_group ON matches(group_id);
 CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status);
@@ -569,6 +580,7 @@ ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE group_teams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE matches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE gallery_images ENABLE ROW LEVEL SECURITY;
+ALTER TABLE finals_settings ENABLE ROW LEVEL SECURITY;
 
 -- Public read
 CREATE POLICY "public_read_categories" ON categories FOR SELECT USING (true);
@@ -579,6 +591,7 @@ CREATE POLICY "public_read_teams" ON teams FOR SELECT USING (true);
 CREATE POLICY "public_read_group_teams" ON group_teams FOR SELECT USING (true);
 CREATE POLICY "public_read_matches" ON matches FOR SELECT USING (true);
 CREATE POLICY "public_read_gallery" ON gallery_images FOR SELECT USING (true);
+CREATE POLICY "public_read_finals_settings" ON finals_settings FOR SELECT USING (true);
 
 -- Admin write
 CREATE POLICY "admin_write_categories" ON categories FOR ALL USING (is_admin()) WITH CHECK (is_admin());
@@ -589,6 +602,9 @@ CREATE POLICY "admin_write_teams" ON teams FOR ALL USING (is_admin()) WITH CHECK
 CREATE POLICY "admin_write_group_teams" ON group_teams FOR ALL USING (is_admin()) WITH CHECK (is_admin());
 CREATE POLICY "admin_write_matches" ON matches FOR ALL USING (is_admin()) WITH CHECK (is_admin());
 CREATE POLICY "admin_write_gallery" ON gallery_images FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+CREATE POLICY "admin_insert_finals_settings" ON finals_settings FOR INSERT WITH CHECK (is_admin());
+CREATE POLICY "admin_update_finals_settings" ON finals_settings FOR UPDATE USING (is_admin()) WITH CHECK (is_admin());
+CREATE POLICY "admin_delete_finals_settings" ON finals_settings FOR DELETE USING (is_admin());
 
 -- Admins table: only admins can read (to verify membership)
 CREATE POLICY "admin_read_admins" ON admins FOR SELECT USING (is_admin());
