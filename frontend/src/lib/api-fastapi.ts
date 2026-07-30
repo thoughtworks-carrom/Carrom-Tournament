@@ -6,11 +6,16 @@ import {
   type KnockoutMatchState,
   type KnockoutStateMap,
 } from "./knockout-state";
+import {
+  loadFinalsSettings,
+  saveFinalsSettings,
+} from "./finals-storage";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 import type {
   ApiCategory,
+  ApiFinalsSettings,
   ApiGalleryImage,
   ApiGroup,
   ApiGroupPlayer,
@@ -189,6 +194,21 @@ export const fastapiClient = {
     const map = loadKnockoutState();
     map[matchId] = state;
     saveKnockoutState(map);
+  },
+
+  getFinalsSettings: async (): Promise<ApiFinalsSettings> => loadFinalsSettings(),
+
+  updateFinalsSettings: async (patch: {
+    youtube_url?: string | null;
+    live_match_id?: string | null;
+  }): Promise<ApiFinalsSettings> => {
+    const next = {
+      ...loadFinalsSettings(),
+      ...patch,
+      updated_at: new Date().toISOString(),
+    };
+    saveFinalsSettings(next);
+    return next;
   },
 };
 

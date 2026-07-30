@@ -114,7 +114,7 @@ export function KnockoutMatchDetailPanel({
   const { state } = match;
   const isCompleted = state.status === "Completed";
   const isFinal = match.id.endsWith("-final") || match.id === "ws-final";
-  const pointsMatch = isPointsOrBoardsFormat(match.format);
+  const pointsMatch = isFinal || isPointsOrBoardsFormat(match.format);
   const [winnerSide, setWinnerSide] = useState<"A" | "B">(
     state.winnerSide ?? "A",
   );
@@ -155,7 +155,9 @@ export function KnockoutMatchDetailPanel({
               {match.round}
             </span>
             <StatusBadge status={state.status} />
-            <span className="text-xs text-slate-400">{formatLabel(match.format)}</span>
+            <span className="text-xs text-slate-400">
+              {isFinal ? "25 points · up to 8 boards" : formatLabel(match.format)}
+            </span>
           </div>
           <h4 className="font-display text-xl font-bold flex items-center gap-2">
             {isFinal && <Trophy className="w-5 h-5 text-tw-magenta shrink-0" />}
@@ -208,7 +210,7 @@ export function KnockoutMatchDetailPanel({
               </p>
               {pointsMatch ? (
                 <p className="text-sm font-semibold text-slate-500 mt-1 tabular-nums">
-                  Boards: {boards}
+                  Boards won: {boards}
                 </p>
               ) : null}
               {adminMode && match.ready && !isCompleted && (

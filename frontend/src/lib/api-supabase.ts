@@ -9,6 +9,7 @@ import {
 } from "./knockout-state";
 import type {
   ApiCategory,
+  ApiFinalsSettings,
   ApiGalleryImage,
   ApiGroup,
   ApiGroupPlayer,
@@ -676,6 +677,43 @@ export const supabaseClient = {
     };
     const { error } = await sb.from("knockout_matches").upsert(row);
     if (error) sbError(error);
+  },
+
+  getFinalsSettings: async (): Promise<ApiFinalsSettings> => {
+    const sb = requireSupabase();
+    const { data, error } = await sb
+      .from("finals_settings")
+      .select("youtube_url, live_match_id, updated_at")
+      .eq("id", 1)
+      .maybeSingle();
+    if (error) sbError(error);
+    return {
+      youtube_url: (data?.youtube_url as string | null) ?? null,
+      live_match_id: (data?.live_match_id as string | null) ?? null,
+      updated_at: (data?.updated_at as string) ?? new Date().toISOString(),
+    };
+  },
+
+  updateFinalsSettings: async (patch: {
+    youtube_url?: string | null;
+    live_match_id?: string | null;
+  }): Promise<ApiFinalsSettings> => {
+    const sb = await requireAdminSession();
+    const { data, error } = await sb
+      .from("finals_settings")
+      .upsert({
+        id: 1,
+        ...patch,
+        updated_at: new Date().toISOString(),
+      })
+      .select("youtube_url, live_match_id, updated_at")
+      .single();
+    if (error) sbError(error);
+    return {
+      youtube_url: data.youtube_url as string | null,
+      live_match_id: data.live_match_id as string | null,
+      updated_at: data.updated_at as string,
+    };
   },
 };
 

@@ -16,6 +16,7 @@ export type {
   ApiStanding,
   ApiGalleryImage,
   ApiMatch,
+  ApiFinalsSettings,
 } from "./types";
 
 const client = useSupabase() ? supabaseClient : fastapiClient;
@@ -51,6 +52,8 @@ export const api = {
   resetAllMatchResults: client.resetAllMatchResults,
   getKnockoutState: client.getKnockoutState,
   upsertKnockoutMatch: client.upsertKnockoutMatch,
+  getFinalsSettings: client.getFinalsSettings,
+  updateFinalsSettings: client.updateFinalsSettings,
 };
 
 export function galleryImageUrl(urlPath: string) {

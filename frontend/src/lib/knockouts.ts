@@ -331,7 +331,7 @@ export function buildWomensSinglesKnockout(
             id: "ws-final",
             round: "Final",
             label: "Final",
-            format: FORMAT_BO5,
+            format: FORMAT_POINTS_OR_BOARDS,
             slotA: { label: "TBD", name: "TBD" },
             slotB: { label: "TBD", name: "TBD" },
             slotASource: "ws-q1",

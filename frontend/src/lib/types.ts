@@ -67,6 +67,12 @@ export interface ApiGalleryImage {
   created_at: string;
 }
 
+export interface ApiFinalsSettings {
+  youtube_url: string | null;
+  live_match_id: string | null;
+  updated_at: string;
+}
+
 export interface ApiMatch {
   id: string;
   category_id: string;

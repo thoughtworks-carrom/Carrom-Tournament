@@ -78,6 +78,7 @@ import {
   KnockoutMatchDetailPanel,
   KnockoutMatchModal,
 } from "./components/KnockoutMatchDetail";
+import { FinalsSection } from "./components/FinalsSection";
 import {
   buildMensSinglesKnockout,
   buildMensDoublesKnockout,
@@ -349,6 +350,7 @@ const RULES_CATEGORIES = [
 
 const NAV_LINKS = [
   { id: "hero", label: "Home" },
+  { id: "finals", label: "Finals" },
   { id: "categories", label: "Categories" },
   { id: "knockouts", label: "Knockouts" },
   { id: "rules", label: "Rules" },
@@ -4358,6 +4360,15 @@ export default function App() {
       <AdminBanner adminMode={adminMode} onLogout={handleAdminLogout} />
 
       <Hero countdown={countdown} onViewStandings={() => goToStandings()} />
+      <FinalsSection
+        tournament={displayTournament}
+        knockoutState={knockoutState}
+        adminMode={adminMode}
+        onKnockoutUpdate={handleKnockoutUpdate}
+        onKnockoutBoards={handleKnockoutBoards}
+        onKnockoutPoints={handleKnockoutPoints}
+        onKnockoutComplete={handleKnockoutComplete}
+      />
       <StatsBar
         categoryCount={DISPLAY_CATEGORIES.length}
         playerCount={players.length}
