@@ -595,17 +595,17 @@ export function FinalsSection({
         />
 
         <SectionBlock
-          title="Volunteers"
-          subtitle="Cheers to our wonderful volunteers! 💙 You helped us strike the perfect shot and made the Carrom event a memorable success. Thank you!"
-        >
-          <PeoplePhotoGrid photos={FINALS_PHOTOS.volunteers} />
-        </SectionBlock>
-
-        <SectionBlock
           title="Organisers"
           subtitle="The team behind Thoughtworks Hyderabad Carrom Championship 2026"
         >
           <PeoplePhotoGrid photos={FINALS_PHOTOS.organisers} />
+        </SectionBlock>
+
+        <SectionBlock
+          title="Volunteers"
+          subtitle="Cheers to our wonderful volunteers! 💙 You helped us strike the perfect shot and made the Carrom event a memorable success. Thank you!"
+        >
+          <PeoplePhotoGrid photos={FINALS_PHOTOS.volunteers} />
         </SectionBlock>
       </div>
     </section>

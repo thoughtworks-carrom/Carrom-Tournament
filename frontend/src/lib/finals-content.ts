@@ -20,6 +20,22 @@ function photoEntry(section: FinalsPhotoSection, filename: string): FinalsPhoto 
   return { file: `finals/${section}/${filename}`, title };
 }
 
+function titleCaseName(value: string): string {
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function peoplePhotoEntry(
+  section: "organisers" | "volunteers",
+  filename: string,
+): FinalsPhoto {
+  const stem = filename.replace(/\.[^.]+$/, "");
+  return { file: `finals/${section}/${filename}`, title: titleCaseName(stem) };
+}
+
 export const FINALS_PHOTOS: Record<FinalsPhotoSection, FinalsPhoto[]> = {
   "mens-singles-final": [
     photoEntry("mens-singles-final", "Pulkit.webp"),
@@ -37,20 +53,21 @@ export const FINALS_PHOTOS: Record<FinalsPhotoSection, FinalsPhoto[]> = {
     photoEntry("womens-singles-final", "Lakshmi Prasanna.png"),
   ],
   organisers: [
-    photoEntry("organisers", "Gopichand.png"),
-    photoEntry("organisers", "Sai Mohan Reddy.png"),
-    photoEntry("organisers", "sharan reddi.png"),
-    photoEntry("organisers", "Lochan.jpg"),
+    peoplePhotoEntry("organisers", "Gopichand.png"),
+    peoplePhotoEntry("organisers", "Sai Mohan Reddy.png"),
+    peoplePhotoEntry("organisers", "sharan reddi.png"),
+    peoplePhotoEntry("organisers", "Lochan.jpg"),
   ],
   volunteers: [
-    photoEntry("volunteers", "Bharath.jpeg"),
-    photoEntry("volunteers", "chaitanya.png"),
-    photoEntry("volunteers", "chakravarthi.png"),
-    photoEntry("volunteers", "Dinesh.png"),
-    photoEntry("volunteers", "narendra.png"),
-    photoEntry("volunteers", "Raghavendra.png"),
-    photoEntry("volunteers", "Rohini.png"),
-    photoEntry("volunteers", "suresh.png"),
+    peoplePhotoEntry("volunteers", "suresh.png"),
+    peoplePhotoEntry("volunteers", "Praneeth.png"),
+    peoplePhotoEntry("volunteers", "Bharath.jpeg"),
+    peoplePhotoEntry("volunteers", "chaitanya.png"),
+    peoplePhotoEntry("volunteers", "chakravarthi.png"),
+    peoplePhotoEntry("volunteers", "Dinesh.png"),
+    peoplePhotoEntry("volunteers", "narendra.png"),
+    peoplePhotoEntry("volunteers", "Raghavendra.png"),
+    peoplePhotoEntry("volunteers", "Rohini.png"),
   ],
 };
 
