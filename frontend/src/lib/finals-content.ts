@@ -64,7 +64,7 @@ export const FINALS_PHOTOS: Record<FinalsPhotoSection, FinalsPhoto[]> = {
     peoplePhotoEntry("volunteers", "Praneeth.png"),
     peoplePhotoEntry("volunteers", "Yamuna.png"),
     peoplePhotoEntry("volunteers", "Bharath.jpeg"),
-    peoplePhotoEntry("volunteers", "chaitanya.png"),
+    peoplePhotoEntry("volunteers", "chaitanya.jpg"),
     peoplePhotoEntry("volunteers", "chakravarthi.png"),
     peoplePhotoEntry("volunteers", "Dinesh.png"),
     peoplePhotoEntry("volunteers", "narendra.png"),

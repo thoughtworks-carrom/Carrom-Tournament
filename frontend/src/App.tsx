@@ -1470,18 +1470,16 @@ function MatchProgressText({
 function StatsBar({
   categoryCount,
   playerCount,
-  matchProgress,
 }: {
   categoryCount: number;
   playerCount: number;
-  matchProgress: MatchProgress;
 }) {
   const stats = [
     { label: "Categories", value: String(categoryCount), icon: LayoutGrid },
     { label: "Players", value: String(playerCount), icon: Users },
     {
-      label: "Matches completed",
-      value: formatMatchProgress(matchProgress, { suffix: "" }),
+      label: "Completed matches",
+      value: "150+",
       icon: Gamepad2,
     },
     { label: "Tables", value: "3", icon: Circle },
@@ -4065,10 +4063,6 @@ export default function App() {
     () => displayTournament.map((c) => c.category),
     [displayTournament],
   );
-  const matchProgress = useMemo(
-    () => computeTournamentMatchProgress(displayTournament),
-    [displayTournament],
-  );
   const [knockoutState, setKnockoutState] = useState<KnockoutStateMap>({});
 
   const persistKnockoutMatch = useCallback(
@@ -4372,7 +4366,6 @@ export default function App() {
       <StatsBar
         categoryCount={DISPLAY_CATEGORIES.length}
         playerCount={players.length}
-        matchProgress={matchProgress.total}
       />
       <Categories onSelectCategory={goToStandings} />
       <KnockoutsSection
