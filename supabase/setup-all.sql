@@ -606,6 +606,9 @@ CREATE POLICY "admin_insert_finals_settings" ON finals_settings FOR INSERT WITH 
 CREATE POLICY "admin_update_finals_settings" ON finals_settings FOR UPDATE USING (is_admin()) WITH CHECK (is_admin());
 CREATE POLICY "admin_delete_finals_settings" ON finals_settings FOR DELETE USING (is_admin());
 
+GRANT SELECT ON finals_settings TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON finals_settings TO authenticated;
+
 -- Admins table: only admins can read (to verify membership)
 CREATE POLICY "admin_read_admins" ON admins FOR SELECT USING (is_admin());
 

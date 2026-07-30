@@ -686,11 +686,42 @@ export const supabaseClient = {
       .select("youtube_url, live_match_id, updated_at")
       .eq("id", 1)
       .maybeSingle();
-    if (error) sbError(error);
+
+    if (!error) {
+      return {
+        youtube_url: (data?.youtube_url as string | null) ?? null,
+        live_match_id: (data?.live_match_id as string | null) ?? null,
+        updated_at: (data?.updated_at as string) ?? new Date().toISOString(),
+      };
+    }
+
+    // Fallback: anonymous REST read (public SELECT policy + anon key)
+    const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (!baseUrl || !anonKey) sbError(error);
+
+    const res = await fetch(
+      `${baseUrl}/rest/v1/finals_settings?id=eq.1&select=youtube_url,live_match_id,updated_at`,
+      {
+        headers: {
+          apikey: anonKey,
+          Authorization: `Bearer ${anonKey}`,
+        },
+      },
+    );
+    if (!res.ok) {
+      sbError({ message: (await res.text()) || error.message });
+    }
+    const rows = (await res.json()) as Array<{
+      youtube_url?: string | null;
+      live_match_id?: string | null;
+      updated_at?: string;
+    }>;
+    const row = rows[0];
     return {
-      youtube_url: (data?.youtube_url as string | null) ?? null,
-      live_match_id: (data?.live_match_id as string | null) ?? null,
-      updated_at: (data?.updated_at as string) ?? new Date().toISOString(),
+      youtube_url: row?.youtube_url ?? null,
+      live_match_id: row?.live_match_id ?? null,
+      updated_at: row?.updated_at ?? new Date().toISOString(),
     };
   },
 

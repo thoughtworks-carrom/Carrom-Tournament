@@ -449,6 +449,10 @@ export function FinalsSection({
 
   useEffect(() => {
     void loadSettings();
+    const interval = window.setInterval(() => {
+      void loadSettings();
+    }, 15000);
+    return () => window.clearInterval(interval);
   }, [loadSettings]);
 
   useEffect(() => {
@@ -498,49 +502,38 @@ export function FinalsSection({
 
   const savedYoutubeUrl = settings.youtube_url?.trim() ?? "";
 
-  const applyYoutubeUrl = (url: string | null) => {
-    const next: ApiFinalsSettings = {
-      youtube_url: url,
-      live_match_id: null,
-      updated_at: new Date().toISOString(),
-    };
-    setSettings(next);
-    setYoutubeInput(url ?? "");
-    saveFinalsSettings(next);
-  };
-
   const handleSaveYoutube = async () => {
     const url = youtubeInput.trim();
     if (!url) return;
 
-    applyYoutubeUrl(url);
     setBusy(true);
     try {
       const updated = await api.updateFinalsSettings({ youtube_url: url });
       setSettings(updated);
+      setYoutubeInput(updated.youtube_url ?? "");
       saveFinalsSettings(updated);
     } catch (e) {
-      if (useSupabase()) {
-        window.alert(
-          e instanceof Error
-            ? `${e.message}\n\nThe stream plays on this browser. Sign in as admin so all visitors see it.`
-            : "Could not sync to server. Stream plays on this browser only.",
-        );
-      }
+      window.alert(
+        e instanceof Error
+          ? `${e.message}\n\nSign in as admin and ensure Supabase finals_settings is set up so all visitors can watch.`
+          : "Could not save YouTube link for all viewers.",
+      );
     } finally {
       setBusy(false);
     }
   };
 
   const handleClearYoutube = async () => {
-    applyYoutubeUrl(null);
     setBusy(true);
     try {
       const updated = await api.updateFinalsSettings({ youtube_url: null });
       setSettings(updated);
+      setYoutubeInput("");
       saveFinalsSettings(updated);
-    } catch {
-      /* local state already cleared */
+    } catch (e) {
+      window.alert(
+        e instanceof Error ? e.message : "Could not remove YouTube link.",
+      );
     } finally {
       setBusy(false);
     }

@@ -28,4 +28,7 @@ CREATE POLICY "admin_update_finals_settings"
 CREATE POLICY "admin_delete_finals_settings"
   ON finals_settings FOR DELETE USING (is_admin());
 
+GRANT SELECT ON finals_settings TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON finals_settings TO authenticated;
+
 ALTER PUBLICATION supabase_realtime ADD TABLE finals_settings;
