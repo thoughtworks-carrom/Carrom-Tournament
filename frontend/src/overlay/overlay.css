@@ -59,7 +59,7 @@ html.overlay-route #root {
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 12px;
-  padding: 3px 24px;
+  padding: 6px 28px;
   background: linear-gradient(
     90deg,
     rgba(71, 23, 130, 0.75) 0%,
@@ -71,7 +71,7 @@ html.overlay-route #root {
 
 .overlay-bug__top-title {
   font-family: Outfit, system-ui, sans-serif;
-  font-size: 0.82rem;
+  font-size: 0.92rem;
   font-weight: 600;
   color: #ffffff;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
@@ -90,7 +90,7 @@ html.overlay-route #root {
 
 .overlay-bug__top-final {
   font-family: Outfit, system-ui, sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0.2em;
   color: #fbbf24;
@@ -98,12 +98,12 @@ html.overlay-route #root {
 
 .overlay-bug__top-dot {
   color: rgba(255, 255, 255, 0.35);
-  font-size: 0.75rem;
+  font-size: 0.82rem;
 }
 
 .overlay-bug__top-category {
   font-family: Outfit, system-ui, sans-serif;
-  font-size: 0.82rem;
+  font-size: 0.92rem;
   font-weight: 600;
   color: #ffffff;
 }
@@ -114,7 +114,7 @@ html.overlay-route #root {
 }
 
 .overlay-bug__body {
-  padding: 6px 24px 7px;
+  padding: 10px 28px 11px;
 }
 
 .overlay-bug__scores {
@@ -153,9 +153,9 @@ html.overlay-route #root {
 
 .overlay-bug__name {
   font-family: Outfit, system-ui, sans-serif;
-  font-size: 1rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.15;
   color: #ffffff;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.85);
   overflow: hidden;
@@ -171,13 +171,13 @@ html.overlay-route #root {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 5px;
   flex-shrink: 0;
 }
 
 .overlay-bug__score {
   font-family: Outfit, system-ui, sans-serif;
-  font-size: 2.25rem;
+  font-size: 2.65rem;
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -194,14 +194,14 @@ html.overlay-route #root {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 0 8px;
-  min-width: 72px;
+  gap: 4px;
+  padding: 0 10px;
+  min-width: 80px;
 }
 
 .overlay-bug__vs {
   font-family: Outfit, system-ui, sans-serif;
-  font-size: 1.1rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: #fbbf24;
   line-height: 1;
@@ -209,7 +209,7 @@ html.overlay-route #root {
 
 .overlay-bug__center-board {
   font-family: "DM Sans", system-ui, sans-serif;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.85);
   text-align: center;
@@ -217,11 +217,11 @@ html.overlay-route #root {
 }
 
 .overlay-bug__footer-line {
-  margin: 5px 0 0;
-  padding-top: 5px;
+  margin: 7px 0 0;
+  padding-top: 7px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   font-family: "DM Sans", system-ui, sans-serif;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.75);
   text-align: center;
@@ -234,24 +234,24 @@ html.overlay-route #root {
 }
 
 .overlay-bug--doubles .overlay-bug__body {
-  padding: 5px 20px 6px;
+  padding: 9px 24px 10px;
 }
 
 .overlay-bug--doubles .overlay-bug__top {
-  padding: 3px 20px;
+  padding: 6px 24px;
 }
 
 .overlay-bug--doubles .overlay-bug__name {
-  font-size: 0.88rem;
+  font-size: 1rem;
 }
 
 .overlay-bug--doubles .overlay-bug__score {
-  font-size: 2rem;
+  font-size: 2.35rem;
 }
 
 .overlay-bug--doubles .overlay-bug__player-photo {
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
 }
 
 .overlay-bug--doubles .overlay-bug__side {
@@ -349,8 +349,8 @@ html.overlay-route #root {
 }
 
 .overlay-board-dot {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -367,8 +367,8 @@ html.overlay-route #root {
 }
 
 .overlay-bug__player-photo {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 999px;
   object-fit: cover;
   border: 2px solid rgba(255, 255, 255, 0.25);
