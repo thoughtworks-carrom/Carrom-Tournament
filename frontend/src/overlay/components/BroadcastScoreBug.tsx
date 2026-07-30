@@ -8,7 +8,7 @@ import {
   sectionForOverlayCategory,
 } from "../../lib/finals-content";
 import type { OverlayCategorySlug } from "../overlay-utils";
-import { BoardProgress, BoardStatusBar } from "./BoardStatus";
+import { BoardProgress } from "./BoardStatus";
 import { LiveBadge } from "./LiveBadge";
 import { WinnerBanner } from "./WinnerBanner";
 
@@ -53,10 +53,7 @@ function ParticipantBlock({
   const display = resolveFinalsScoreDisplay(match);
   const slot = side === "A" ? match.resolvedA : match.resolvedB;
   const points = side === "A" ? display.pointsA : display.pointsB;
-  const boardsWon = side === "A" ? display.boardsWonA : display.boardsWonB;
   const names = isDoubles ? splitTeamNames(slot.name) : [slot.name];
-  const align = side === "A" ? "left" : "right";
-  const alignRight = side === "B";
 
   return (
     <div
@@ -64,13 +61,13 @@ function ParticipantBlock({
         side === "B" ? "overlay-bug__participant--right" : ""
       } ${isWinner ? "overlay-winner-reveal" : ""}`}
     >
-      <div className={`overlay-bug__names ${alignRight ? "items-end" : ""}`}>
+      <div
+        className={`overlay-bug__side ${
+          side === "B" ? "overlay-bug__side--right" : ""
+        }`}
+      >
         {photoFiles.length > 0 ? (
-          <div
-            className={`overlay-bug__photo-row ${
-              alignRight ? "overlay-bug__photo-row--right" : ""
-            }`}
-          >
+          <div className="overlay-bug__photo-row">
             {photoFiles.map((file) => (
               <img
                 key={file}
@@ -81,23 +78,22 @@ function ParticipantBlock({
             ))}
           </div>
         ) : null}
-        {names.map((name) => (
-          <p
-            key={name}
-            className={`overlay-bug__name ${isWinner ? "overlay-bug__name--winner" : ""}`}
-          >
-            {name}
-          </p>
-        ))}
-      </div>
 
-      <div className={`overlay-bug__score-block overlay-bug__score-block--${align}`}>
-        <ScoreValue value={points} isWinner={isWinner} />
-        <p className="overlay-bug__score-label">Points</p>
-        <p className="overlay-bug__meta mt-1">
-          Boards won: <strong>{boardsWon}</strong>
-        </p>
-        <BoardProgress display={display} side={side} />
+        <div className={`overlay-bug__names ${side === "B" ? "text-right" : ""}`}>
+          {names.map((name) => (
+            <p
+              key={name}
+              className={`overlay-bug__name ${isWinner ? "overlay-bug__name--winner" : ""}`}
+            >
+              {name}
+            </p>
+          ))}
+        </div>
+
+        <div className={`overlay-bug__score-col ${side === "B" ? "items-end" : ""}`}>
+          <ScoreValue value={points} isWinner={isWinner} />
+          <BoardProgress display={display} side={side} />
+        </div>
       </div>
     </div>
   );
@@ -127,14 +123,11 @@ export function BroadcastScoreBug({
   return (
     <div className={`overlay-bug overlay-fade-in${isDoubles ? " overlay-bug--doubles" : ""}`}>
       <div className="overlay-bug__top">
-        <p className="overlay-bug__top-title">
-          <span aria-hidden>🎯 </span>
-          Thoughtworks Hyderabad · Carrom Championship 2026
-        </p>
+        <p className="overlay-bug__top-title">TW Hyderabad Carrom 2026</p>
 
         <div className="overlay-bug__top-center">
           <span className="overlay-bug__top-final">FINAL</span>
-          <span className="text-white/35">·</span>
+          <span className="overlay-bug__top-dot">·</span>
           <span className="overlay-bug__top-category">{categoryLabel}</span>
         </div>
 
@@ -160,9 +153,6 @@ export function BroadcastScoreBug({
           <div className="overlay-bug__center">
             <span className="overlay-bug__vs">VS</span>
             <span className="overlay-bug__center-board">{boardStatusLabel(display)}</span>
-            <span className="overlay-bug__meta text-center">
-              Boards won {display.boardsWonA}–{display.boardsWonB}
-            </span>
           </div>
 
           <ParticipantBlock
@@ -174,7 +164,11 @@ export function BroadcastScoreBug({
           />
         </div>
 
-        <BoardStatusBar display={display} />
+        <p className="overlay-bug__footer-line">
+          Boards <strong>{display.boardsWonA}–{display.boardsWonB}</strong>
+          <span className="overlay-bug__footer-sep">·</span>
+          First to <strong>25</strong> points
+        </p>
       </div>
     </div>
   );

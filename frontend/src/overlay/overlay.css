@@ -44,38 +44,37 @@ html.overlay-route #root {
 
 .overlay-bug {
   width: 100%;
-  border-radius: 0;
   overflow: hidden;
   background: linear-gradient(
     180deg,
-    rgba(10, 14, 28, 0.94) 0%,
-    rgba(6, 10, 22, 0.97) 100%
+    rgba(10, 14, 28, 0.96) 0%,
+    rgba(6, 10, 22, 0.98) 100%
   );
   border-top: 2px solid rgba(251, 191, 36, 0.45);
-  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
 }
 
 .overlay-bug__top {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 16px;
-  padding: 8px 40px;
+  gap: 12px;
+  padding: 3px 24px;
   background: linear-gradient(
     90deg,
-    rgba(71, 23, 130, 0.7) 0%,
-    rgba(20, 28, 48, 0.55) 50%,
-    rgba(162, 24, 109, 0.55) 100%
+    rgba(71, 23, 130, 0.75) 0%,
+    rgba(20, 28, 48, 0.6) 50%,
+    rgba(162, 24, 109, 0.6) 100%
   );
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .overlay-bug__top-title {
   font-family: Outfit, system-ui, sans-serif;
-  font-size: 1.05rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: #ffffff;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -85,25 +84,28 @@ html.overlay-route #root {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 8px;
   white-space: nowrap;
 }
 
 .overlay-bug__top-final {
   font-family: Outfit, system-ui, sans-serif;
-  font-size: 0.95rem;
+  font-size: 0.75rem;
   font-weight: 800;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.2em;
   color: #fbbf24;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.overlay-bug__top-dot {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.75rem;
 }
 
 .overlay-bug__top-category {
   font-family: Outfit, system-ui, sans-serif;
-  font-size: 1.05rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: #ffffff;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 .overlay-bug__top-right {
@@ -112,74 +114,50 @@ html.overlay-route #root {
 }
 
 .overlay-bug__body {
-  padding: 10px 32px 12px;
-}
-
-.overlay-bug--doubles .overlay-bug__body {
-  padding: 8px 28px 10px;
-}
-
-.overlay-bug--doubles .overlay-bug__top {
-  padding: 6px 28px;
-}
-
-.overlay-bug--doubles .overlay-bug__name {
-  font-size: 1.1rem;
-}
-
-.overlay-bug--doubles .overlay-bug__score {
-  font-size: 3.1rem;
-}
-
-.overlay-bug--doubles .overlay-bug__player-photo {
-  width: 46px;
-  height: 46px;
-}
-
-.overlay-bug--doubles .overlay-bug__scores {
-  gap: 12px;
-}
-
-.overlay-bug--doubles .overlay-bug__center {
-  min-width: 120px;
-  padding: 0 8px;
+  padding: 6px 24px 7px;
 }
 
 .overlay-bug__scores {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
 }
 
 .overlay-bug__participant {
+  min-width: 0;
+}
+
+.overlay-bug__participant--right {
+  text-align: right;
+}
+
+.overlay-bug__side {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 10px;
   min-width: 0;
 }
 
-.overlay-bug__participant--right {
-  align-items: flex-end;
-  text-align: right;
+.overlay-bug__side--right {
+  flex-direction: row-reverse;
 }
 
 .overlay-bug__names {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 1px;
   min-width: 0;
   flex: 1;
 }
 
 .overlay-bug__name {
   font-family: Outfit, system-ui, sans-serif;
-  font-size: 1.4rem;
+  font-size: 1rem;
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.1;
   color: #ffffff;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.85);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -187,57 +165,28 @@ html.overlay-route #root {
 
 .overlay-bug__name--winner {
   color: #fbbf24;
-  text-shadow: 0 0 16px rgba(251, 191, 36, 0.4), 0 2px 10px rgba(0, 0, 0, 0.85);
 }
 
-.overlay-bug__meta {
-  font-family: "DM Sans", system-ui, sans-serif;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.82);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
-  margin-top: 4px;
-}
-
-.overlay-bug__score-block {
+.overlay-bug__score-col {
   display: flex;
   flex-direction: column;
   align-items: center;
-  shrink: 0;
-}
-
-.overlay-bug__score-block--left {
-  align-items: flex-start;
-}
-
-.overlay-bug__score-block--right {
-  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
 }
 
 .overlay-bug__score {
   font-family: Outfit, system-ui, sans-serif;
-  font-size: 3.75rem;
+  font-size: 2.25rem;
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   color: #ffffff;
-  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
 }
 
 .overlay-bug__score--winner {
   color: #fbbf24;
-  text-shadow: 0 0 24px rgba(251, 191, 36, 0.45), 0 4px 16px rgba(0, 0, 0, 0.9);
-}
-
-.overlay-bug__score-label {
-  font-family: "DM Sans", system-ui, sans-serif;
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.65);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
-  margin-top: 2px;
 }
 
 .overlay-bug__center {
@@ -245,57 +194,72 @@ html.overlay-route #root {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 0 12px;
-  min-width: 140px;
+  gap: 2px;
+  padding: 0 8px;
+  min-width: 72px;
 }
 
 .overlay-bug__vs {
   font-family: Outfit, system-ui, sans-serif;
-  font-size: 1.75rem;
+  font-size: 1.1rem;
   font-weight: 800;
   color: #fbbf24;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
+  line-height: 1;
 }
 
 .overlay-bug__center-board {
-  font-family: Outfit, system-ui, sans-serif;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #ffffff;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
   text-align: center;
   white-space: nowrap;
 }
 
-.overlay-bug__footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 8px 20px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.overlay-bug__footer-item {
+.overlay-bug__footer-line {
+  margin: 5px 0 0;
+  padding-top: 5px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   font-family: "DM Sans", system-ui, sans-serif;
-  font-size: 0.95rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.88);
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.85);
-  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.75);
+  text-align: center;
+  line-height: 1;
 }
 
-.overlay-bug__footer-item--highlight {
-  color: #fbbf24;
-  font-weight: 700;
-}
-
-.overlay-bug__footer-divider {
+.overlay-bug__footer-sep {
+  margin: 0 6px;
   color: rgba(255, 255, 255, 0.3);
-  font-size: 0.95rem;
+}
+
+.overlay-bug--doubles .overlay-bug__body {
+  padding: 5px 20px 6px;
+}
+
+.overlay-bug--doubles .overlay-bug__top {
+  padding: 3px 20px;
+}
+
+.overlay-bug--doubles .overlay-bug__name {
+  font-size: 0.88rem;
+}
+
+.overlay-bug--doubles .overlay-bug__score {
+  font-size: 2rem;
+}
+
+.overlay-bug--doubles .overlay-bug__player-photo {
+  width: 34px;
+  height: 34px;
+}
+
+.overlay-bug--doubles .overlay-bug__side {
+  gap: 8px;
+}
+
+.overlay-bug--doubles .overlay-bug__scores {
+  gap: 10px;
 }
 
 .overlay-status-wrap {
@@ -303,11 +267,11 @@ html.overlay-route #root {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 24px 48px;
+  padding: 12px 24px;
   background: linear-gradient(
     180deg,
-    rgba(10, 14, 28, 0.94) 0%,
-    rgba(6, 10, 22, 0.97) 100%
+    rgba(10, 14, 28, 0.96) 0%,
+    rgba(6, 10, 22, 0.98) 100%
   );
   border-top: 2px solid rgba(251, 191, 36, 0.45);
 }
@@ -315,9 +279,7 @@ html.overlay-route #root {
 .overlay-status-message {
   font-family: Outfit, system-ui, sans-serif;
   color: #ffffff;
-  letter-spacing: 0.03em;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
-  font-size: 1.75rem;
+  font-size: 1.1rem;
   font-weight: 600;
   text-align: center;
 }
@@ -329,7 +291,7 @@ html.overlay-route #root {
 @keyframes overlay-fade-in {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -382,14 +344,13 @@ html.overlay-route #root {
 
 .overlay-board-dots {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   align-items: center;
-  margin-top: 4px;
 }
 
 .overlay-board-dot {
-  width: 11px;
-  height: 11px;
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -398,30 +359,24 @@ html.overlay-route #root {
 .overlay-board-dot--won-a {
   background: #47cfbb;
   border-color: #47cfbb;
-  box-shadow: 0 0 10px rgba(71, 207, 187, 0.55);
 }
 
 .overlay-board-dot--won-b {
   background: #e55237;
   border-color: #e55237;
-  box-shadow: 0 0 10px rgba(229, 82, 55, 0.55);
 }
 
 .overlay-bug__player-photo {
-  width: 56px;
-  height: 56px;
+  width: 40px;
+  height: 40px;
   border-radius: 999px;
   object-fit: cover;
   border: 2px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
 }
 
 .overlay-bug__photo-row {
   display: flex;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-.overlay-bug__photo-row--right {
-  justify-content: flex-end;
+  gap: 5px;
+  flex-shrink: 0;
 }

@@ -1,6 +1,6 @@
 export function LiveBadge() {
   return (
-    <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-red-600 border border-red-400/50 text-white text-sm font-bold tracking-[0.12em] uppercase overlay-live-pulse shadow-md shadow-red-900/40">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-600 border border-red-400/50 text-white text-[0.65rem] font-bold tracking-[0.1em] uppercase overlay-live-pulse">
       <span aria-hidden>🔴</span>
       LIVE
     </span>
