@@ -106,7 +106,7 @@ function PeoplePhotoGrid({
     <div
       className={
         layout === "row"
-          ? "flex flex-nowrap justify-center gap-5 md:gap-6 lg:gap-8 max-w-7xl mx-auto overflow-x-auto pb-1"
+          ? "flex flex-nowrap justify-center gap-5 md:gap-6 lg:gap-7 max-w-[82rem] mx-auto overflow-x-auto pb-1"
           : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6"
       }
     >
@@ -116,7 +116,7 @@ function PeoplePhotoGrid({
           whileHover={{ scale: 1.02 }}
           className={
             layout === "row"
-              ? "flex flex-col items-center text-center shrink-0 w-36 sm:w-40 md:w-44 lg:w-[11.5rem]"
+              ? "flex flex-col items-center text-center shrink-0 w-40 sm:w-44 md:w-48 lg:w-[13.5rem]"
               : "flex flex-col items-center text-center"
           }
         >
