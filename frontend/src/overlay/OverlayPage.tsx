@@ -12,22 +12,25 @@ function OverlayCanvas({ children }: { children: React.ReactNode }) {
     if (!root) return;
 
     const updateScale = () => {
-      const rw = root.clientWidth;
-      const rh = root.clientHeight;
-      setScale(Math.min(rw / 1920, rh / 1080));
+      const rw = root.clientWidth || window.innerWidth;
+      setScale(Math.min(rw / 1920, 1));
     };
 
     updateScale();
     const observer = new ResizeObserver(updateScale);
     observer.observe(root);
-    return () => observer.disconnect();
+    window.addEventListener("resize", updateScale);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateScale);
+    };
   }, []);
 
   return (
     <div ref={rootRef} className="overlay-root">
       <div
         className="overlay-canvas"
-        style={{ transform: `scale(${scale})`, transformOrigin: "bottom center" }}
+        style={{ transform: `translateX(-50%) scale(${scale})` }}
       >
         {children}
       </div>
@@ -47,6 +50,15 @@ function StatusScreen({ message }: { message: string }) {
 
 export default function OverlayPage() {
   const view = useOverlayMatch();
+
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="viewport"]');
+    const previous = meta?.getAttribute("content") ?? null;
+    meta?.setAttribute("content", "width=1920, initial-scale=1");
+    return () => {
+      if (meta && previous) meta.setAttribute("content", previous);
+    };
+  }, []);
 
   if (view.kind === "loading") {
     return <StatusScreen message="Loading..." />;

@@ -15,6 +15,7 @@ html.overlay-route #root {
 }
 
 .overlay-root {
+  position: relative;
   width: 100vw;
   height: 100vh;
   background: transparent;
@@ -23,12 +24,13 @@ html.overlay-route #root {
 }
 
 .overlay-canvas {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
   width: 1920px;
-  height: 1080px;
   background: transparent;
   transform-origin: bottom center;
   will-change: transform;
-  position: relative;
 }
 
 .overlay-bug-wrap {
@@ -110,7 +112,37 @@ html.overlay-route #root {
 }
 
 .overlay-bug__body {
-  padding: 12px 40px 14px;
+  padding: 10px 32px 12px;
+}
+
+.overlay-bug--doubles .overlay-bug__body {
+  padding: 8px 28px 10px;
+}
+
+.overlay-bug--doubles .overlay-bug__top {
+  padding: 6px 28px;
+}
+
+.overlay-bug--doubles .overlay-bug__name {
+  font-size: 1.1rem;
+}
+
+.overlay-bug--doubles .overlay-bug__score {
+  font-size: 3.1rem;
+}
+
+.overlay-bug--doubles .overlay-bug__player-photo {
+  width: 46px;
+  height: 46px;
+}
+
+.overlay-bug--doubles .overlay-bug__scores {
+  gap: 12px;
+}
+
+.overlay-bug--doubles .overlay-bug__center {
+  min-width: 120px;
+  padding: 0 8px;
 }
 
 .overlay-bug__scores {

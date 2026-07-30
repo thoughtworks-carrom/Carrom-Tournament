@@ -125,7 +125,7 @@ export function BroadcastScoreBug({
   );
 
   return (
-    <div className="overlay-bug overlay-fade-in">
+    <div className={`overlay-bug overlay-fade-in${isDoubles ? " overlay-bug--doubles" : ""}`}>
       <div className="overlay-bug__top">
         <p className="overlay-bug__top-title">
           <span aria-hidden>🎯 </span>
