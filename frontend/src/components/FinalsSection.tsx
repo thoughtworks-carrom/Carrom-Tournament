@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ExternalLink, Radio, Trophy, Youtube } from "lucide-react";
 import { api, type ApiFinalsSettings } from "../lib/api";
@@ -303,6 +303,50 @@ function YouTubeLiveAdminPanel({
 function YouTubeLiveViewer({ youtubeUrl }: { youtubeUrl: string }) {
   const url = youtubeUrl.trim();
   const embed = youtubeEmbedUrl(url);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const playEmbed = useCallback(() => {
+    iframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: "command", func: "playVideo", args: "" }),
+      "*",
+    );
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !embed) return;
+
+    const resumeIfVisible = () => {
+      playEmbed();
+      window.setTimeout(playEmbed, 600);
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting && entry.intersectionRatio >= 0.2) {
+          window.setTimeout(resumeIfVisible, 200);
+        }
+      },
+      { threshold: [0, 0.2, 0.5] },
+    );
+
+    observer.observe(container);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      const rect = container.getBoundingClientRect();
+      const inView = rect.top < window.innerHeight && rect.bottom > 0;
+      if (inView) resumeIfVisible();
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [embed, playEmbed]);
 
   if (!embed) {
     return (
@@ -325,15 +369,25 @@ function YouTubeLiveViewer({ youtubeUrl }: { youtubeUrl: string }) {
     );
   }
 
+  const origin =
+    typeof window !== "undefined" ? encodeURIComponent(window.location.origin) : "";
+  const embedSrc =
+    `${embed}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1&playsinline=1` +
+    (origin ? `&origin=${origin}` : "");
+
   return (
     <div className="rounded-2xl overflow-hidden glass shadow-xl max-w-4xl mx-auto">
-      <div className="aspect-video w-full bg-black">
+      <div ref={containerRef} className="aspect-video w-full bg-black">
         <iframe
-          src={`${embed}?autoplay=1&rel=0&modestbranding=1`}
+          ref={iframeRef}
+          src={embedSrc}
           title="YouTube live stream"
           className="w-full h-full border-0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
+          onLoad={() => {
+            window.setTimeout(playEmbed, 300);
+          }}
         />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-t border-white/10 dark:border-slate-700/50">
