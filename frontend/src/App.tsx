@@ -79,6 +79,7 @@ import {
   KnockoutMatchModal,
 } from "./components/KnockoutMatchDetail";
 import { FinalsSection } from "./components/FinalsSection";
+import { ChampionshipCelebrationSection } from "./components/ChampionshipCelebrationSection";
 import {
   buildMensSinglesKnockout,
   buildMensDoublesKnockout,
@@ -350,6 +351,7 @@ const RULES_CATEGORIES = [
 
 const NAV_LINKS = [
   { id: "hero", label: "Home" },
+  { id: "celebration", label: "Winners" },
   { id: "finals", label: "Finals" },
   { id: "categories", label: "Categories" },
   { id: "knockouts", label: "Knockouts" },
@@ -4354,6 +4356,10 @@ export default function App() {
       <AdminBanner adminMode={adminMode} onLogout={handleAdminLogout} />
 
       <Hero countdown={countdown} onViewStandings={() => goToStandings()} />
+      <ChampionshipCelebrationSection
+        tournament={displayTournament}
+        knockoutState={knockoutState}
+      />
       <FinalsSection
         tournament={displayTournament}
         knockoutState={knockoutState}

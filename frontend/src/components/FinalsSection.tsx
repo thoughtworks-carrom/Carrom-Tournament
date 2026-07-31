@@ -4,11 +4,9 @@ import { ExternalLink, Coffee, Radio, Trophy, Youtube } from "lucide-react";
 import { api, type ApiFinalsSettings } from "../lib/api";
 import { useSupabase } from "../lib/config";
 import {
-  FINALS_PHOTOS,
   finalsPhotoUrl,
   photosForSlot,
   youtubeEmbedUrl,
-  type FinalsPhoto,
   type FinalsPhotoSection,
 } from "../lib/finals-content";
 import {
@@ -31,6 +29,7 @@ import type { CategoryData } from "../lib/tournament";
 import { loadFinalsSettings, saveFinalsSettings } from "../lib/finals-storage";
 import { KnockoutMatchDetailPanel } from "./KnockoutMatchDetail";
 import { FinalsSideScore } from "./FinalsSideScore";
+import { SectionBlock } from "./PeoplePhotoGrid";
 import { supabase } from "../lib/supabase";
 
 const FINAL_MATCH_TABS = [
@@ -62,89 +61,6 @@ const FINAL_MATCH_TABS = [
 
 function scrollToLiveSection() {
   document.getElementById("finals-live")?.scrollIntoView({ behavior: "smooth" });
-}
-
-function SectionBlock({
-  title,
-  subtitle,
-  children,
-  id,
-}: {
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
-  id?: string;
-}) {
-  return (
-    <div id={id} className="mb-16 last:mb-0 scroll-mt-24">
-      <div className="mb-8">
-        <h3 className="font-display text-2xl md:text-3xl font-bold text-tw-ink dark:text-white">
-          {title}
-        </h3>
-        {subtitle ? (
-          <p className="text-tw-purple/70 dark:text-slate-400 mt-2">{subtitle}</p>
-        ) : null}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function PeoplePhotoGrid({
-  photos,
-  layout = "grid",
-}: {
-  photos: FinalsPhoto[];
-  layout?: "grid" | "row";
-}) {
-  if (photos.length === 0) {
-    return (
-      <p className="text-center text-slate-500 dark:text-slate-400 py-8 rounded-2xl border border-dashed border-tw-purple/20 dark:border-tw-teal/20">
-        Photos will appear here once added to the repo.
-      </p>
-    );
-  }
-
-  return (
-    <div
-      className={
-        layout === "row"
-          ? "flex flex-nowrap justify-center gap-5 md:gap-6 lg:gap-7 max-w-[82rem] mx-auto overflow-x-auto pb-1"
-          : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6"
-      }
-    >
-      {photos.map((photo) => (
-        <motion.div
-          key={photo.file}
-          whileHover={{ scale: 1.02 }}
-          className={
-            layout === "row"
-              ? "flex flex-col items-center text-center shrink-0 w-40 sm:w-44 md:w-48 lg:w-[13.5rem]"
-              : "flex flex-col items-center text-center"
-          }
-        >
-          <div className="w-full aspect-square rounded-2xl overflow-hidden glass bg-white/60 dark:bg-slate-800/60 flex items-center justify-center p-3">
-            <img
-              src={finalsPhotoUrl(photo.file)}
-              alt={photo.title ?? "Photo"}
-              className="max-w-full max-h-full w-full h-full object-contain"
-            />
-          </div>
-          {photo.title ? (
-            <p
-              className={
-                layout === "row"
-                  ? "mt-3 text-sm md:text-base font-semibold text-tw-ink dark:text-white leading-snug"
-                  : "mt-3 text-sm font-semibold text-tw-ink dark:text-white leading-snug"
-              }
-            >
-              {photo.title}
-            </p>
-          ) : null}
-        </motion.div>
-      ))}
-    </div>
-  );
 }
 
 function PublicFinalScoreView({
@@ -804,26 +720,6 @@ export function FinalsSection({
           busy={busy}
         />
 
-        <SectionBlock
-          title="Organisers"
-          subtitle="The team behind Thoughtworks Hyderabad Carrom Championship 2026"
-        >
-          <PeoplePhotoGrid photos={FINALS_PHOTOS.organisers} layout="row" />
-        </SectionBlock>
-
-        <SectionBlock
-          title="Volunteers"
-          subtitle="Cheers to our wonderful volunteers! 💙 You helped us strike the perfect shot and made the Carrom event a memorable success. Thank you!"
-        >
-          <PeoplePhotoGrid photos={FINALS_PHOTOS.volunteers} />
-        </SectionBlock>
-
-        <SectionBlock
-          title="Admin Team"
-          subtitle="Thank you for making this event possible."
-        >
-          <PeoplePhotoGrid photos={FINALS_PHOTOS["admin-team"]} layout="row" />
-        </SectionBlock>
       </div>
     </section>
   );
