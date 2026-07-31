@@ -35,11 +35,19 @@ import { supabase } from "../lib/supabase";
 
 const FINAL_MATCH_TABS = [
   {
+    section: "womens-singles-final" as const,
+    label: "Women's Singles",
+    finalId: "ws-final",
+    build: buildWomensSinglesKnockout,
+    category: "Women's Singles",
+  },
+  {
     section: "mens-singles-final" as const,
     label: "Men's Singles",
     finalId: "ms-final",
     build: buildMensSinglesKnockout,
     category: "Men's Singles",
+    schedule: "31 July · 2:00 PM",
   },
   {
     section: "mens-doubles-final" as const,
@@ -48,14 +56,7 @@ const FINAL_MATCH_TABS = [
     build: buildMensDoublesKnockout,
     category: "Men's Doubles",
   },
-  {
-    section: "womens-singles-final" as const,
-    label: "Women's Singles",
-    finalId: "ws-final",
-    build: buildWomensSinglesKnockout,
-    category: "Women's Singles",
-  },
-];
+] as const;
 
 function scrollToLiveSection() {
   document.getElementById("finals-live")?.scrollIntoView({ behavior: "smooth" });
@@ -149,11 +150,13 @@ function PublicFinalScoreView({
   section,
   onGoToLive,
   isOnYoutubeLive,
+  schedule,
 }: {
   match: ResolvedKnockoutMatch;
   section: FinalsPhotoSection;
   onGoToLive: () => void;
   isOnYoutubeLive: boolean;
+  schedule?: string;
 }) {
   const display = resolveFinalsScoreDisplay(match);
   const isLive = match.state.status === "Live" || isOnYoutubeLive;
@@ -233,6 +236,11 @@ function PublicFinalScoreView({
           {match.state.status}
         </span>
         <span className="text-xs text-slate-500">{finalsFormatLabel()}</span>
+        {schedule ? (
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-tw-purple/10 text-tw-purple dark:bg-tw-teal/15 dark:text-tw-teal border border-tw-purple/20 dark:border-tw-teal/25">
+            {schedule}
+          </span>
+        ) : null}
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">{sides}</div>
@@ -640,7 +648,11 @@ export function FinalsSection({
 
         <SectionBlock
           title="Final Matches"
-          subtitle={adminMode ? "Edit scores for each final" : "Live scores for each final"}
+          subtitle={
+            adminMode
+              ? "Women's Singles → Men's Singles (31 July, 2 PM) → Men's Doubles"
+              : "Play order: Women's Singles, then Men's Singles (31 July · 2 PM), then Men's Doubles"
+          }
         >
           <div className="flex flex-wrap justify-center gap-3 mb-8">
             {FINAL_MATCH_TABS.map((tab, index) => (
@@ -652,9 +664,18 @@ export function FinalsSection({
                   activeTab === index
                     ? "bg-gradient-to-r from-tw-purple to-tw-magenta text-white shadow-lg"
                     : "glass text-tw-purple dark:text-slate-300 hover:bg-tw-teal/10"
-                }`}
+                } ${"schedule" in tab && tab.schedule ? "flex flex-col items-center gap-0.5 min-w-[9.5rem]" : ""}`}
               >
-                {tab.label}
+                <span>{tab.label}</span>
+                {"schedule" in tab && tab.schedule ? (
+                  <span
+                    className={`text-[11px] font-medium ${
+                      activeTab === index ? "text-white/90" : "text-tw-purple/70 dark:text-slate-400"
+                    }`}
+                  >
+                    {tab.schedule}
+                  </span>
+                ) : null}
               </button>
             ))}
           </div>
@@ -670,6 +691,7 @@ export function FinalsSection({
                 section={activeConfig.section}
                 onGoToLive={scrollToLiveSection}
                 isOnYoutubeLive={Boolean(savedYoutubeUrl)}
+                schedule={"schedule" in activeConfig ? activeConfig.schedule : undefined}
               />
 
               {adminMode ? (

@@ -3508,13 +3508,13 @@ function KnockoutsSection({
   ) => void;
   onKnockoutComplete: (matchId: string, winnerSide: "A" | "B") => void;
 }) {
-  const [tab, setTab] = useState<"mens-singles" | "mens-doubles" | "womens">("mens-singles");
+  const [tab, setTab] = useState<"mens-singles" | "mens-doubles" | "womens">("womens");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const knockoutTabs = [
+    { id: "womens" as const, label: "Women's Singles" },
     { id: "mens-singles" as const, label: "Men's Singles" },
     { id: "mens-doubles" as const, label: "Men's Doubles" },
-    { id: "womens" as const, label: "Women's Singles" },
   ] as const;
 
   const activeTab = tab;
@@ -3574,7 +3574,7 @@ function KnockoutsSection({
           subtitle={
             adminMode
               ? "Click a match to open details · Quarterfinals → Semifinals → Championship"
-              : "Men's Singles, Men's Doubles & Women's Singles · tap a match for details"
+              : "Women's Singles · Men's Singles · Men's Doubles · tap a match for details"
           }
           icon={Award}
         />
