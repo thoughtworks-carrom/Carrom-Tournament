@@ -15,21 +15,15 @@ export function FinalsSideScore({
 
   if (variant === "overlay") {
     return (
-      <div className={`overlay-bug__score-col ${side === "B" ? "items-end" : ""}`}>
-        <div className={`flex flex-col ${side === "B" ? "items-end" : "items-start"}`}>
-          <span className="overlay-bug__boards-won tabular-nums">{boardsWon}</span>
-          <span className="overlay-bug__boards-won-label">boards won</span>
-        </div>
-        <div className={`flex flex-col ${side === "B" ? "items-end" : "items-start"} mt-1`}>
-          <span className="overlay-bug__board-points tabular-nums">
-            {points}
-            <span className="overlay-bug__board-points-target">/{display.pointsToWin}</span>
-          </span>
-          <span className="overlay-bug__board-points-label">
-            board {display.currentBoard} pts
-          </span>
-        </div>
-        <BoardWinDots won={boardsWon} side={side} size="sm" />
+      <div className={`overlay-bug__score-col overlay-bug__score-col--compact ${side === "B" ? "items-end" : ""}`}>
+        <span className="overlay-bug__score tabular-nums">
+          {points}
+          <span className="overlay-bug__board-points-target">/{display.pointsToWin}</span>
+        </span>
+        <span className="overlay-bug__board-meta tabular-nums">
+          {boardsWon} bd · B{display.currentBoard}
+        </span>
+        <BoardWinDots won={boardsWon} side={side} size="sm" compact />
       </div>
     );
   }

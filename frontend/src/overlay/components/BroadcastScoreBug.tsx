@@ -2,7 +2,6 @@ import type { ResolvedKnockoutMatch } from "../../lib/knockout-state";
 import {
   resolveFinalsScoreDisplay,
   boardStatusLabel,
-  finalsScoreSummary,
 } from "../../lib/finals-scoring";
 import { splitTeamNames } from "../overlay-utils";
 import {
@@ -146,7 +145,9 @@ export function BroadcastScoreBug({
         </div>
 
         <p className="overlay-bug__footer-line">
-          {finalsScoreSummary(display)} · First to <strong>25</strong> points wins each board
+          Boards <strong>{display.boardsWonA}–{display.boardsWonB}</strong>
+          <span className="overlay-bug__footer-sep">·</span>
+          First to <strong>25</strong> pts per board
         </p>
       </div>
     </div>

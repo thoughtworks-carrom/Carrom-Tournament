@@ -4,16 +4,21 @@ export function BoardWinDots({
   won,
   side,
   size = "md",
+  compact = false,
 }: {
   won: number;
   side: "A" | "B";
   size?: "sm" | "md";
+  compact?: boolean;
 }) {
   const dotSize = size === "sm" ? "w-2 h-2" : "w-2.5 h-2.5";
   const gap = size === "sm" ? "gap-1" : "gap-1.5";
 
   return (
-    <div className={`flex justify-center ${gap} mt-3`} aria-label={`${won} boards won`}>
+    <div
+      className={`flex justify-center ${gap} ${compact ? "mt-0.5" : "mt-3"}`}
+      aria-label={`${won} boards won`}
+    >
       {Array.from({ length: FINALS_MAX_BOARDS }, (_, i) => (
         <span
           key={i}
