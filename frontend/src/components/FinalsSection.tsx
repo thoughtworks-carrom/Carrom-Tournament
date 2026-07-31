@@ -40,6 +40,7 @@ const FINAL_MATCH_TABS = [
     finalId: "ws-final",
     build: buildWomensSinglesKnockout,
     category: "Women's Singles",
+    schedule: "31 July · 12:30 PM",
   },
   {
     section: "mens-singles-final" as const,
@@ -651,8 +652,8 @@ export function FinalsSection({
           title="Final Matches"
           subtitle={
             adminMode
-              ? "Women's Singles → Men's Singles (31 July, 2 PM) → Men's Doubles (31 July, 4 PM)"
-              : "Play order: Women's Singles, then Men's Singles (31 July · 2 PM), then Men's Doubles (31 July · 4 PM)"
+              ? "Women's Singles (31 July, 12:30 PM) → Men's Singles (31 July, 2 PM) → Men's Doubles (31 July, 4 PM)"
+              : "Play order: Women's Singles (31 July · 12:30 PM), then Men's Singles (31 July · 2 PM), then Men's Doubles (31 July · 4 PM)"
           }
         >
           <div className="flex flex-wrap justify-center gap-3 mb-8">
