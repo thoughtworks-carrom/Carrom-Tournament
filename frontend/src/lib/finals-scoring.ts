@@ -57,7 +57,11 @@ export function resolveFinalsScoreDisplay(
 }
 
 export function finalsFormatLabel(): string {
-  return `${FINALS_POINTS_TO_WIN} points · up to ${FINALS_MAX_BOARDS} boards`;
+  return `First to ${FINALS_POINTS_TO_WIN} points per board · up to ${FINALS_MAX_BOARDS} boards`;
+}
+
+export function finalsScoreSummary(display: FinalsScoreDisplay): string {
+  return `Board ${display.currentBoard} · ${display.pointsA}–${display.pointsB} pts · Boards won ${display.boardsWonA}–${display.boardsWonB}`;
 }
 
 export function boardStatusLabel(display: FinalsScoreDisplay): string {

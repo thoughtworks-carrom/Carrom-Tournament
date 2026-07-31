@@ -203,12 +203,24 @@ export function KnockoutMatchDetailPanel({
                 {player(slot.name, slot.employeeId)}
               </div>
               <p className="text-4xl font-bold text-tw-teal mt-3 tabular-nums">
-                {pointsMatch ? points : boards}
+                {isFinal ? boards : pointsMatch ? points : boards}
               </p>
               <p className="text-xs text-slate-400">
-                {pointsMatch ? "points" : "boards won"}
+                {isFinal
+                  ? "boards won"
+                  : pointsMatch
+                    ? "points"
+                    : "boards won"}
               </p>
-              {pointsMatch ? (
+              {isFinal ? (
+                <>
+                  <p className="text-2xl font-bold text-slate-700 dark:text-slate-200 mt-3 tabular-nums">
+                    {points}
+                    <span className="text-lg font-semibold text-slate-400">/25</span>
+                  </p>
+                  <p className="text-xs text-slate-400">current board points</p>
+                </>
+              ) : pointsMatch ? (
                 <p className="text-sm font-semibold text-slate-500 mt-1 tabular-nums">
                   Boards won: {boards}
                 </p>

@@ -13,8 +13,8 @@ import {
 } from "../lib/finals-content";
 import {
   resolveFinalsScoreDisplay,
-  boardStatusLabel,
   finalsFormatLabel,
+  finalsScoreSummary,
 } from "../lib/finals-scoring";
 import {
   resolveKnockoutBracket,
@@ -30,7 +30,7 @@ import {
 import type { CategoryData } from "../lib/tournament";
 import { loadFinalsSettings, saveFinalsSettings } from "../lib/finals-storage";
 import { KnockoutMatchDetailPanel } from "./KnockoutMatchDetail";
-import { BoardWinDots } from "./BoardWinDots";
+import { FinalsSideScore } from "./FinalsSideScore";
 import { supabase } from "../lib/supabase";
 
 const FINAL_MATCH_TABS = [
@@ -170,8 +170,6 @@ function PublicFinalScoreView({
     <>
       {(["A", "B"] as const).map((side) => {
         const slot = side === "A" ? match.resolvedA : match.resolvedB;
-        const points = side === "A" ? display.pointsA : display.pointsB;
-        const boardsWon = side === "A" ? display.boardsWonA : display.boardsWonB;
         const won = match.state.winnerSide === side;
         const photos = photosForSlot(section, slot.name, isDoubles);
 
@@ -205,16 +203,7 @@ function PublicFinalScoreView({
             <p className="font-display text-lg md:text-xl font-bold text-tw-ink dark:text-white mb-3">
               {slot.name}
             </p>
-            <p className="font-display text-5xl font-extrabold tabular-nums text-tw-purple dark:text-tw-teal">
-              {points}
-            </p>
-            <p className="text-xs uppercase tracking-wider text-slate-500 mt-1">
-              points
-            </p>
-            <p className="text-sm font-semibold text-slate-600 dark:text-slate-400 mt-2 tabular-nums">
-              Boards won: {boardsWon}
-            </p>
-            <BoardWinDots won={boardsWon} side={side} />
+            <FinalsSideScore display={display} side={side} />
           </div>
         );
       })}
@@ -261,8 +250,7 @@ function PublicFinalScoreView({
       <div className="grid sm:grid-cols-2 gap-4">{sides}</div>
 
       <p className="text-center text-sm text-slate-600 dark:text-slate-400">
-        {boardStatusLabel(display)} · Boards won {display.boardsWonA}–{display.boardsWonB} ·
-        First to {display.pointsToWin} points
+        {finalsScoreSummary(display)} · First to {display.pointsToWin} points wins each board
       </p>
 
       {isLive ? (

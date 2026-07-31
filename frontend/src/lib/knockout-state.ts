@@ -168,16 +168,12 @@ function inferWinnerSide(
   if (state.winnerSide) return state.winnerSide;
 
   if (match.format.type === "points-or-boards") {
-    const { pointsToWin, maxBoards } = match.format;
-    const pointsA = state.pointsA ?? 0;
-    const pointsB = state.pointsB ?? 0;
+    const { maxBoards } = match.format;
     const totalBoards = state.boardsA + state.boardsB;
 
-    if (pointsA >= pointsToWin) return "A";
-    if (pointsB >= pointsToWin) return "B";
     if (totalBoards >= maxBoards && totalBoards > 0) {
-      if (pointsA > pointsB) return "A";
-      if (pointsB > pointsA) return "B";
+      if (state.boardsA > state.boardsB) return "A";
+      if (state.boardsB > state.boardsA) return "B";
     }
     return undefined;
   }
@@ -258,11 +254,6 @@ export function updateKnockoutMatch(
     };
   } else if (patch.winnerSide) {
     next = { ...next, status: "Completed", winnerSide: patch.winnerSide };
-  } else {
-    const winnerSide = inferWinnerSide(match, next);
-    if (winnerSide) {
-      next = { ...next, status: "Completed", winnerSide };
-    }
   }
 
   return { ...states, [match.id]: next };

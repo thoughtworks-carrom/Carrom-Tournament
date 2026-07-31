@@ -1,6 +1,9 @@
-import { useEffect, useState } from "react";
 import type { ResolvedKnockoutMatch } from "../../lib/knockout-state";
-import { resolveFinalsScoreDisplay, boardStatusLabel } from "../../lib/finals-scoring";
+import {
+  resolveFinalsScoreDisplay,
+  boardStatusLabel,
+  finalsScoreSummary,
+} from "../../lib/finals-scoring";
 import { splitTeamNames } from "../overlay-utils";
 import {
   finalsPhotoUrl,
@@ -8,35 +11,10 @@ import {
   sectionForOverlayCategory,
 } from "../../lib/finals-content";
 import type { OverlayCategorySlug } from "../overlay-utils";
-import { BoardProgress } from "./BoardStatus";
+import { FinalsSideScore } from "../../components/FinalsSideScore";
 import { LiveBadge } from "./LiveBadge";
 import { BreakBadge } from "./BreakBadge";
 import { WinnerBanner } from "./WinnerBanner";
-
-function ScoreValue({
-  value,
-  isWinner,
-}: {
-  value: number;
-  isWinner: boolean;
-}) {
-  const [key, setKey] = useState(value);
-
-  useEffect(() => {
-    if (value !== key) setKey(value);
-  }, [value, key]);
-
-  return (
-    <span
-      key={key}
-      className={`overlay-bug__score overlay-score-bump ${
-        isWinner ? "overlay-bug__score--winner" : ""
-      }`}
-    >
-      {value}
-    </span>
-  );
-}
 
 function ParticipantBlock({
   side,
@@ -53,7 +31,6 @@ function ParticipantBlock({
 }) {
   const display = resolveFinalsScoreDisplay(match);
   const slot = side === "A" ? match.resolvedA : match.resolvedB;
-  const points = side === "A" ? display.pointsA : display.pointsB;
   const names = isDoubles ? splitTeamNames(slot.name) : [slot.name];
 
   return (
@@ -91,10 +68,7 @@ function ParticipantBlock({
           ))}
         </div>
 
-        <div className={`overlay-bug__score-col ${side === "B" ? "items-end" : ""}`}>
-          <ScoreValue value={points} isWinner={isWinner} />
-          <BoardProgress display={display} side={side} />
-        </div>
+        <FinalsSideScore display={display} side={side} variant="overlay" />
       </div>
     </div>
   );
@@ -172,9 +146,7 @@ export function BroadcastScoreBug({
         </div>
 
         <p className="overlay-bug__footer-line">
-          Boards <strong>{display.boardsWonA}–{display.boardsWonB}</strong>
-          <span className="overlay-bug__footer-sep">·</span>
-          First to <strong>25</strong> points
+          {finalsScoreSummary(display)} · First to <strong>25</strong> points wins each board
         </p>
       </div>
     </div>
