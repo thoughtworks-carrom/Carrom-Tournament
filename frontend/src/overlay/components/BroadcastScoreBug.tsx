@@ -147,7 +147,7 @@ export function BroadcastScoreBug({
         <p className="overlay-bug__footer-line">
           Boards <strong>{display.boardsWonA}–{display.boardsWonB}</strong>
           <span className="overlay-bug__footer-sep">·</span>
-          First to <strong>25</strong> pts per board
+          First to <strong>25</strong> points win
         </p>
       </div>
     </div>
