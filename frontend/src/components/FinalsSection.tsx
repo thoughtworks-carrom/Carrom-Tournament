@@ -55,6 +55,7 @@ const FINAL_MATCH_TABS = [
     finalId: "md-final",
     build: buildMensDoublesKnockout,
     category: "Men's Doubles",
+    schedule: "31 July · 4:00 PM",
   },
 ] as const;
 
@@ -650,8 +651,8 @@ export function FinalsSection({
           title="Final Matches"
           subtitle={
             adminMode
-              ? "Women's Singles → Men's Singles (31 July, 2 PM) → Men's Doubles"
-              : "Play order: Women's Singles, then Men's Singles (31 July · 2 PM), then Men's Doubles"
+              ? "Women's Singles → Men's Singles (31 July, 2 PM) → Men's Doubles (31 July, 4 PM)"
+              : "Play order: Women's Singles, then Men's Singles (31 July · 2 PM), then Men's Doubles (31 July · 4 PM)"
           }
         >
           <div className="flex flex-wrap justify-center gap-3 mb-8">
