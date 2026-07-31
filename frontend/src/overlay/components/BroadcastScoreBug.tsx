@@ -10,6 +10,7 @@ import {
 import type { OverlayCategorySlug } from "../overlay-utils";
 import { BoardProgress } from "./BoardStatus";
 import { LiveBadge } from "./LiveBadge";
+import { BreakBadge } from "./BreakBadge";
 import { WinnerBanner } from "./WinnerBanner";
 
 function ScoreValue({
@@ -104,11 +105,13 @@ export function BroadcastScoreBug({
   categoryLabel,
   isDoubles,
   categorySlug,
+  isOnBreak = false,
 }: {
   match: ResolvedKnockoutMatch;
   categoryLabel: string;
   isDoubles: boolean;
   categorySlug: OverlayCategorySlug;
+  isOnBreak?: boolean;
 }) {
   const display = resolveFinalsScoreDisplay(match);
   const winnerSide = match.state.winnerSide;
@@ -132,7 +135,9 @@ export function BroadcastScoreBug({
         </div>
 
         <div className="overlay-bug__top-right">
-          {status === "Live" ? (
+          {isOnBreak ? (
+            <BreakBadge />
+          ) : status === "Live" ? (
             <LiveBadge />
           ) : status === "Completed" ? (
             <WinnerBanner />
@@ -152,7 +157,9 @@ export function BroadcastScoreBug({
 
           <div className="overlay-bug__center">
             <span className="overlay-bug__vs">VS</span>
-            <span className="overlay-bug__center-board">{boardStatusLabel(display)}</span>
+            <span className="overlay-bug__center-board">
+              {isOnBreak ? "Match on break" : boardStatusLabel(display)}
+            </span>
           </div>
 
           <ParticipantBlock

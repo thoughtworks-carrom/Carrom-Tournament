@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ExternalLink, Radio, Trophy, Youtube } from "lucide-react";
+import { ExternalLink, Coffee, Radio, Trophy, Youtube } from "lucide-react";
 import { api, type ApiFinalsSettings } from "../lib/api";
 import { useSupabase } from "../lib/config";
 import {
@@ -152,12 +152,14 @@ function PublicFinalScoreView({
   section,
   onGoToLive,
   isOnYoutubeLive,
+  isOnBreak,
   schedule,
 }: {
   match: ResolvedKnockoutMatch;
   section: FinalsPhotoSection;
   onGoToLive: () => void;
   isOnYoutubeLive: boolean;
+  isOnBreak: boolean;
   schedule?: string;
 }) {
   const display = resolveFinalsScoreDisplay(match);
@@ -228,14 +230,16 @@ function PublicFinalScoreView({
         </span>
         <span
           className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
-            isLive
-              ? "bg-tw-coral text-white animate-pulse-soft"
-              : match.state.status === "Completed"
-                ? "bg-tw-teal/20 text-tw-purple dark:text-tw-teal"
-                : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+            isOnBreak
+              ? "bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/40 animate-pulse-soft"
+              : isLive
+                ? "bg-tw-coral text-white animate-pulse-soft"
+                : match.state.status === "Completed"
+                  ? "bg-tw-teal/20 text-tw-purple dark:text-tw-teal"
+                  : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
           }`}
         >
-          {match.state.status}
+          {isOnBreak ? "Break" : match.state.status}
         </span>
         <span className="text-xs text-slate-500">{finalsFormatLabel()}</span>
         {schedule ? (
@@ -244,6 +248,15 @@ function PublicFinalScoreView({
           </span>
         ) : null}
       </div>
+
+      {isOnBreak ? (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center">
+          <p className="text-sm font-semibold text-amber-800 dark:text-amber-200 flex items-center justify-center gap-2">
+            <Coffee className="w-4 h-4 shrink-0" />
+            Match on break — play will resume shortly
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid sm:grid-cols-2 gap-4">{sides}</div>
 
@@ -274,6 +287,50 @@ function PublicFinalScoreView({
   }
 
   return <div className="glass rounded-2xl p-6 md:p-8 mb-6">{content}</div>;
+}
+
+function MatchBreakAdminToggle({
+  matchId,
+  breakMatchId,
+  onToggle,
+  busy,
+}: {
+  matchId: string;
+  breakMatchId: string | null;
+  onToggle: (nextBreakMatchId: string | null) => void;
+  busy: boolean;
+}) {
+  const isOnBreak = breakMatchId === matchId;
+
+  return (
+    <div className="glass rounded-2xl p-4 mb-6 border border-amber-500/25 bg-amber-500/5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+            Match break (admin)
+          </p>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+            {isOnBreak
+              ? "Viewers and the OBS overlay see a break banner for this final."
+              : "Show a break banner while players rest between boards."}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => onToggle(isOnBreak ? null : matchId)}
+          disabled={busy}
+          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm disabled:opacity-50 ${
+            isOnBreak
+              ? "bg-slate-600 hover:bg-slate-500 text-white"
+              : "bg-amber-500 hover:bg-amber-400 text-white"
+          }`}
+        >
+          <Coffee className="w-4 h-4" />
+          {isOnBreak ? "End break" : "Show break"}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function YouTubeLiveAdminPanel({
@@ -514,6 +571,7 @@ export function FinalsSection({
   const [settings, setSettings] = useState<ApiFinalsSettings>({
     youtube_url: null,
     live_match_id: null,
+    break_match_id: null,
     updated_at: new Date().toISOString(),
   });
   const [youtubeInput, setYoutubeInput] = useState("");
@@ -554,12 +612,14 @@ export function FinalsSection({
           const row = payload.new as {
             youtube_url?: string | null;
             live_match_id?: string | null;
+            break_match_id?: string | null;
             updated_at?: string;
           };
           if (!row) return;
           const next = {
             youtube_url: row.youtube_url ?? null,
             live_match_id: row.live_match_id ?? null,
+            break_match_id: row.break_match_id ?? null,
             updated_at: row.updated_at ?? new Date().toISOString(),
           };
           setSettings(next);
@@ -624,6 +684,27 @@ export function FinalsSection({
       setBusy(false);
     }
   };
+
+  const handleToggleBreak = async (nextBreakMatchId: string | null) => {
+    setBusy(true);
+    try {
+      const updated = await api.updateFinalsSettings({
+        break_match_id: nextBreakMatchId,
+      });
+      setSettings(updated);
+      saveFinalsSettings(updated);
+    } catch (e) {
+      window.alert(
+        e instanceof Error
+          ? `${e.message}\n\nSign in as admin to update break status for all viewers.`
+          : "Could not update break status.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const activeBreakMatchId = settings.break_match_id;
 
   return (
     <section
@@ -693,11 +774,19 @@ export function FinalsSection({
                 section={activeConfig.section}
                 onGoToLive={scrollToLiveSection}
                 isOnYoutubeLive={Boolean(savedYoutubeUrl)}
+                isOnBreak={activeBreakMatchId === activeMatch.id}
                 schedule={"schedule" in activeConfig ? activeConfig.schedule : undefined}
               />
 
               {adminMode ? (
-                <div className="glass rounded-2xl p-6 md:p-8 mt-6 border border-tw-coral/20">
+                <>
+                  <MatchBreakAdminToggle
+                    matchId={activeMatch.id}
+                    breakMatchId={activeBreakMatchId}
+                    onToggle={(next) => void handleToggleBreak(next)}
+                    busy={busy}
+                  />
+                  <div className="glass rounded-2xl p-6 md:p-8 mt-6 border border-tw-coral/20">
                   <p className="text-xs font-bold uppercase tracking-wider text-tw-coral mb-4">
                     Admin — edit final scores
                   </p>
@@ -710,6 +799,7 @@ export function FinalsSection({
                     onComplete={(side) => onKnockoutComplete(activeMatch.id, side)}
                   />
                 </div>
+                </>
               ) : null}
             </>
           )}

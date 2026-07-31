@@ -72,7 +72,7 @@ export default function OverlayPage() {
     return <StatusScreen message="No Active Final Match" />;
   }
 
-  const { match, categoryLabel, isDoubles, connection } = view;
+  const { match, categoryLabel, isDoubles, connection, isOnBreak } = view;
 
   return (
     <OverlayCanvas>
@@ -88,6 +88,7 @@ export default function OverlayPage() {
           categoryLabel={categoryLabel}
           isDoubles={isDoubles}
           categorySlug={view.categorySlug}
+          isOnBreak={isOnBreak}
         />
       </div>
     </OverlayCanvas>

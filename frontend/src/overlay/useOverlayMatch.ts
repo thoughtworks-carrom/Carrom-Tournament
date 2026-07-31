@@ -6,6 +6,7 @@ import {
   mapRowToKnockoutState,
   type ApiKnockoutRow,
   type KnockoutStateMap,
+  type ResolvedKnockoutMatch,
 } from "../lib/knockout-state";
 import { fetchTournamentData, type CategoryData } from "../lib/tournament";
 import { supabase } from "../lib/supabase";
@@ -18,7 +19,7 @@ import {
   resolveFinalMatch,
   type OverlayCategorySlug,
 } from "./overlay-utils";
-import type { ResolvedKnockoutMatch } from "../lib/knockout-state";
+import { loadFinalsSettings, saveFinalsSettings } from "../lib/finals-storage";
 
 export type OverlayConnectionState = "connecting" | "connected" | "reconnecting";
 
@@ -33,6 +34,7 @@ export type OverlayViewState =
       isDoubles: boolean;
       match: ResolvedKnockoutMatch;
       connection: OverlayConnectionState;
+      isOnBreak: boolean;
     };
 
 function readCategoryParam(): string | null {
@@ -51,6 +53,7 @@ export function useOverlayMatch(): OverlayViewState {
   const [connection, setConnection] = useState<OverlayConnectionState>(
     "connecting",
   );
+  const [breakMatchId, setBreakMatchId] = useState<string | null>(null);
 
   const loadInitialData = useCallback(async () => {
     const [{ tournament: data }, knockout] = await Promise.all([
@@ -71,6 +74,46 @@ export function useOverlayMatch(): OverlayViewState {
     }
     void loadInitialData();
   }, [categorySlug, loadInitialData]);
+
+  useEffect(() => {
+    const loadBreakSetting = async () => {
+      try {
+        const remote = await api.getFinalsSettings();
+        setBreakMatchId(remote.break_match_id);
+        saveFinalsSettings(remote);
+      } catch {
+        setBreakMatchId(loadFinalsSettings().break_match_id);
+      }
+    };
+
+    void loadBreakSetting();
+    const interval = window.setInterval(() => {
+      void loadBreakSetting();
+    }, 5000);
+
+    const sb = supabase;
+    if (!useSupabase() || !sb) {
+      return () => window.clearInterval(interval);
+    }
+
+    const channel = sb
+      .channel("overlay-finals-settings")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "finals_settings" },
+        (payload) => {
+          const row = payload.new as { break_match_id?: string | null };
+          if (!row) return;
+          setBreakMatchId(row.break_match_id ?? null);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      window.clearInterval(interval);
+      void sb.removeChannel(channel);
+    };
+  }, []);
 
   const matchId = categorySlug ? finalMatchIdFromSlug(categorySlug) : null;
 
@@ -162,5 +205,6 @@ export function useOverlayMatch(): OverlayViewState {
     isDoubles: isDoublesCategory(categorySlug),
     match: resolvedMatch,
     connection,
+    isOnBreak: breakMatchId === resolvedMatch.id,
   };
 }

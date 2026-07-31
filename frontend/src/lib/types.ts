@@ -70,6 +70,7 @@ export interface ApiGalleryImage {
 export interface ApiFinalsSettings {
   youtube_url: string | null;
   live_match_id: string | null;
+  break_match_id: string | null;
   updated_at: string;
 }
 

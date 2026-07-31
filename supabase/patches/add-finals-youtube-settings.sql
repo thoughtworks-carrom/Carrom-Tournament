@@ -5,11 +5,12 @@ CREATE TABLE IF NOT EXISTS finals_settings (
   id int PRIMARY KEY DEFAULT 1 CHECK (id = 1),
   youtube_url text,
   live_match_id text,
+  break_match_id text,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-INSERT INTO finals_settings (id, youtube_url, live_match_id)
-VALUES (1, NULL, NULL)
+INSERT INTO finals_settings (id, youtube_url, live_match_id, break_match_id)
+VALUES (1, NULL, NULL, NULL)
 ON CONFLICT (id) DO NOTHING;
 
 ALTER TABLE finals_settings ENABLE ROW LEVEL SECURITY;

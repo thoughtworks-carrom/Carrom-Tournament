@@ -683,7 +683,7 @@ export const supabaseClient = {
     const sb = requireSupabase();
     const { data, error } = await sb
       .from("finals_settings")
-      .select("youtube_url, live_match_id, updated_at")
+      .select("youtube_url, live_match_id, break_match_id, updated_at")
       .eq("id", 1)
       .maybeSingle();
 
@@ -691,6 +691,7 @@ export const supabaseClient = {
       return {
         youtube_url: (data?.youtube_url as string | null) ?? null,
         live_match_id: (data?.live_match_id as string | null) ?? null,
+        break_match_id: (data?.break_match_id as string | null) ?? null,
         updated_at: (data?.updated_at as string) ?? new Date().toISOString(),
       };
     }
@@ -701,7 +702,7 @@ export const supabaseClient = {
     if (!baseUrl || !anonKey) sbError(error);
 
     const res = await fetch(
-      `${baseUrl}/rest/v1/finals_settings?id=eq.1&select=youtube_url,live_match_id,updated_at`,
+      `${baseUrl}/rest/v1/finals_settings?id=eq.1&select=youtube_url,live_match_id,break_match_id,updated_at`,
       {
         headers: {
           apikey: anonKey,
@@ -715,12 +716,14 @@ export const supabaseClient = {
     const rows = (await res.json()) as Array<{
       youtube_url?: string | null;
       live_match_id?: string | null;
+      break_match_id?: string | null;
       updated_at?: string;
     }>;
     const row = rows[0];
     return {
       youtube_url: row?.youtube_url ?? null,
       live_match_id: row?.live_match_id ?? null,
+      break_match_id: row?.break_match_id ?? null,
       updated_at: row?.updated_at ?? new Date().toISOString(),
     };
   },
@@ -728,6 +731,7 @@ export const supabaseClient = {
   updateFinalsSettings: async (patch: {
     youtube_url?: string | null;
     live_match_id?: string | null;
+    break_match_id?: string | null;
   }): Promise<ApiFinalsSettings> => {
     const sb = await requireAdminSession();
     const { data, error } = await sb
@@ -737,12 +741,13 @@ export const supabaseClient = {
         ...patch,
         updated_at: new Date().toISOString(),
       })
-      .select("youtube_url, live_match_id, updated_at")
+      .select("youtube_url, live_match_id, break_match_id, updated_at")
       .single();
     if (error) sbError(error);
     return {
       youtube_url: data.youtube_url as string | null,
       live_match_id: data.live_match_id as string | null,
+      break_match_id: data.break_match_id as string | null,
       updated_at: data.updated_at as string,
     };
   },

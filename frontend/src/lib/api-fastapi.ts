@@ -201,6 +201,7 @@ export const fastapiClient = {
   updateFinalsSettings: async (patch: {
     youtube_url?: string | null;
     live_match_id?: string | null;
+    break_match_id?: string | null;
   }): Promise<ApiFinalsSettings> => {
     const next = {
       ...loadFinalsSettings(),

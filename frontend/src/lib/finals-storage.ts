@@ -5,6 +5,7 @@ const STORAGE_KEY = "carrom-finals-youtube-v1";
 const DEFAULT: ApiFinalsSettings = {
   youtube_url: null,
   live_match_id: null,
+  break_match_id: null,
   updated_at: new Date().toISOString(),
 };
 
