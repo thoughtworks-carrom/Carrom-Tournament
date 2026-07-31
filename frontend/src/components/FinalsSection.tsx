@@ -737,6 +737,13 @@ export function FinalsSection({
         >
           <PeoplePhotoGrid photos={FINALS_PHOTOS.volunteers} />
         </SectionBlock>
+
+        <SectionBlock
+          title="Admin Team"
+          subtitle="Thank you for making this event possible."
+        >
+          <PeoplePhotoGrid photos={FINALS_PHOTOS["admin-team"]} layout="row" />
+        </SectionBlock>
       </div>
     </section>
   );

@@ -8,7 +8,8 @@ export type FinalsPhotoSection =
   | "mens-doubles-final"
   | "womens-singles-final"
   | "organisers"
-  | "volunteers";
+  | "volunteers"
+  | "admin-team";
 
 export interface FinalsPhoto {
   file: string;
@@ -29,11 +30,15 @@ function titleCaseName(value: string): string {
 }
 
 function peoplePhotoEntry(
-  section: "organisers" | "volunteers",
+  section: "organisers" | "volunteers" | "admin-team",
   filename: string,
+  displayTitle?: string,
 ): FinalsPhoto {
   const stem = filename.replace(/\.[^.]+$/, "");
-  return { file: `finals/${section}/${filename}`, title: titleCaseName(stem) };
+  return {
+    file: `finals/${section}/${filename}`,
+    title: displayTitle ?? titleCaseName(stem),
+  };
 }
 
 export const FINALS_PHOTOS: Record<FinalsPhotoSection, FinalsPhoto[]> = {
@@ -58,6 +63,11 @@ export const FINALS_PHOTOS: Record<FinalsPhotoSection, FinalsPhoto[]> = {
     peoplePhotoEntry("organisers", "sharan reddi.png"),
     peoplePhotoEntry("organisers", "mani kumar reddy .png"),
     peoplePhotoEntry("organisers", "Lochan.jpg"),
+  ],
+  "admin-team": [
+    peoplePhotoEntry("admin-team", "Anthony Suresh Kumar P.png", "Anthony Suresh Kumar"),
+    peoplePhotoEntry("admin-team", "Ravi Munagala.png"),
+    peoplePhotoEntry("admin-team", "Vijay Palaki.png"),
   ],
   volunteers: [
     peoplePhotoEntry("volunteers", "suresh.png"),
